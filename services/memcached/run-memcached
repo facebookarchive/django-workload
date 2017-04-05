@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# 5GB
+MEMORY="${MEMORY:-5120}"
+
+# Network config
+LISTEN="${LISTEN:-0.0.0.0}"
+PORT="${PORT:-11811}"
+
+# User to run under
+USER="${USER:-memcache}"
+
+/usr/bin/memcached -vv -u $USER -m $MEMORY -l $LISTEN -p $PORT
