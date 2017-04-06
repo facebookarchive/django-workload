@@ -1,4 +1,4 @@
-# Memcached configuration
+# Cassandra configuration
 
 ## Requirements
 This directory sets up a Cassandra NoSQL server.
