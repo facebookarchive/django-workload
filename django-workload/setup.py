@@ -22,6 +22,7 @@ setup(
       ],
       install_requires=[
           'Django >= 1.11',
+          'uwsgi >= 2.0.15',
       ],
       include_package_data=True,
 )
