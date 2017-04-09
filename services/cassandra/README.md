@@ -28,7 +28,7 @@ Configure cassandra to listen to a public IP address. Please do protect this
 cluster with a firewall to prevent unauthorised access!
 
 Edit `/etc/cassandra/cassandra.yml` to replace the `listen_address` configuration
-with `listen_address eth0`, then restart with `systemctl restart cassandra`.
+with `listen_address 0.0.0.0`, then restart with `systemctl restart cassandra`.
 
 There seems to be an issue with cassandra expecting the output of `hostname` to
 resolve to either an ipv4 address or to localhost; if you see an error about
