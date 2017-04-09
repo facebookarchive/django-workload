@@ -118,3 +118,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# Statsd default configuration
+# http://statsd.readthedocs.io/en/latest/
+STATSD_HOST = 'localhost'
+STATSD_PORT = 8125
+STATSD_PREFIX = None
+STATSD_MAXUDPSIZE = 512

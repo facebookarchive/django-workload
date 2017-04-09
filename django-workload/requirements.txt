@@ -1,0 +1,5 @@
+--index-url https://pypi.python.org/simple/
+
+# prefer the unreleased version of statsd with minor fixes, only on GitHub
+-e git+https://github.com/jsocol/pystatsd#egg=statsd
+-e .
