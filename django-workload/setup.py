@@ -22,7 +22,7 @@ setup(
       ],
       install_requires=[
           'Django >= 1.11',
-          'statsd',
+          'django-statsd-mozilla',
           'uwsgi >= 2.0.15',
       ],
       include_package_data=True,
