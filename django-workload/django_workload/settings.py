@@ -47,6 +47,9 @@ MIDDLEWARE = [
 #    'django.contrib.auth.middleware.AuthenticationMiddleware',
 #    'django.contrib.messages.middleware.MessageMiddleware',
 #    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'django_workload.middleware.GraphiteRequestTimingMiddleware',
+    'django_statsd.middleware.GraphiteMiddleware',
 ]
 
 ROOT_URLCONF = 'django_workload.urls'
