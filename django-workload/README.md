@@ -25,6 +25,12 @@ On Ubuntu 16.04, you can run:
     source venv/bin/activate
     pip install -r requirements.txt
 
+Next, copy the `cluster_settings_template.py` template to `cluster_settings.py`
+and edit this to point to the various services running in the cluster:
+
+    cp cluster_settings_template.py cluster_settings.py
+    $EDITOR cluster_settings.py
+
 ## running
 
 Start the service with
