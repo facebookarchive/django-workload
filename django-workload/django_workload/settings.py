@@ -120,7 +120,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # Statsd default configuration
+# https://django-statsd.readthedocs.io/en/latest/
 # http://statsd.readthedocs.io/en/latest/
+STATSD_CLIENT = 'django_statsd.clients.normal'
 STATSD_HOST = 'localhost'
 STATSD_PORT = 8125
 STATSD_PREFIX = None
