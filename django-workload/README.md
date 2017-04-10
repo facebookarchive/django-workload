@@ -14,7 +14,13 @@ a firewalled environment.
 
 On Ubuntu 16.04, you can run:
 
-    apt-get install git python3-virtualenv python3-dev build-essential
+    apt-get install \
+      build-essential \
+      git \
+      libmemcached-dev \
+      python3-virtualenv \
+      python3-dev \
+      zlib1g-dev
     python3 -m virtualenv -p python3 venv
     source venv/bin/activate
     pip install -r requirements.txt

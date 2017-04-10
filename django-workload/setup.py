@@ -23,6 +23,7 @@ setup(
       install_requires=[
           'Django >= 1.11',
           'django-statsd-mozilla',
+          'pylibmc',
           'uwsgi >= 2.0.15',
       ],
       include_package_data=True,
