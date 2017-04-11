@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_cassandra_engine',
+    'django_workload',
 ]
 
 MIDDLEWARE = [
@@ -139,6 +140,7 @@ STATSD_HOST = 'localhost'
 STATSD_PORT = 8125
 STATSD_PREFIX = None
 STATSD_MAXUDPSIZE = 512
+STATSD_IPV6 = False
 
 # Cache configuration
 CACHES = {
