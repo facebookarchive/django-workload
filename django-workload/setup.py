@@ -22,6 +22,7 @@ setup(
       ],
       install_requires=[
           'Django >= 1.11',
+          'django-cassandra-engine',
           'django-statsd-mozilla',
           'pylibmc',
           'uwsgi >= 2.0.15',

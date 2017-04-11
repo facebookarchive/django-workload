@@ -7,6 +7,9 @@ from django_workload.settings import *
 SECRET_KEY = '()2uyyko+p=dv*nmu$b5my9px!e0=6r5unm19or$02$-c62%gb'
 DEBUG = False
 
+# Cassandra database
+DATABASES['default']['HOST'] = 'localhost'
+
 # Monitoring server
 STATSD_HOST = 'localhost'
 STATSD_PORT = 8125
