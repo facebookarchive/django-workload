@@ -51,7 +51,7 @@ MIDDLEWARE = [
 #    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
     'django_workload.middleware.GraphiteRequestTimingMiddleware',
-    'django_statsd.middleware.GraphiteMiddleware',
+    'django_workload.middleware.GraphiteMiddleware',
 ]
 
 ROOT_URLCONF = 'django_workload.urls'
