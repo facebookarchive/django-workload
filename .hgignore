@@ -1,3 +1,7 @@
+# Project-specific files
+# settings file copied and customised from a template
+django-workload/cluster_settings.py
+
 # Compiled Python scripts
 syntax: glob
 
