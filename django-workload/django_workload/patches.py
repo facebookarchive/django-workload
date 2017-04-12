@@ -4,6 +4,8 @@ from inspect import getdoc
 from statsd.defaults import django as statsd_django_defaults
 from statsd.client import StatsClient
 
+from .global_request import get_view_name
+
 
 _patches = []
 
@@ -45,7 +47,8 @@ def patch_cassandra_execute():
     def decorator(orig):
         @wraps(orig)
         def timed_execute(self, *args, **kwargs):
-            with statsd.timer('cassandra.execute'):
+            key = 'cassandra.{}.execute'.format(get_view_name())
+            with statsd.timer(key):
                 return orig(self, *args, **kwargs)
         return timed_execute
 
@@ -61,7 +64,7 @@ def patch_memcached_methods():
     def decorator(orig):
         @wraps(orig)
         def timed(self, *args, **kwargs):
-            key = 'memcached.{}'.format(orig.__name__)
+            key = 'memcached.{}.{}'.format(get_view_name(), orig.__name__)
             with statsd.timer(key):
                 return orig(self, *args, **kwargs)
         return timed

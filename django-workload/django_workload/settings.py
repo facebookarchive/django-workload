@@ -50,6 +50,7 @@ MIDDLEWARE = [
 #    'django.contrib.messages.middleware.MessageMiddleware',
 #    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
+    'django_workload.middleware.global_request_middleware',
     'django_workload.middleware.GraphiteRequestTimingMiddleware',
     'django_workload.middleware.GraphiteMiddleware',
 ]
