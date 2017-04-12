@@ -47,6 +47,7 @@ def patch_cassandra_execute():
         def timed_execute(self, *args, **kwargs):
             with statsd.timer('cassandra.execute'):
                 return orig(self, *args, **kwargs)
+        return timed_execute
 
     CassandraConnection.execute = decorator(CassandraConnection.execute)
 
