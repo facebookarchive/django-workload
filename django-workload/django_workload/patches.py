@@ -52,6 +52,26 @@ def patch_cassandra_execute():
     CassandraConnection.execute = decorator(CassandraConnection.execute)
 
 
+@register_patch
+def patch_memcached_methods():
+    """Record timings for the Memcached Django integration"""
+    from django.core.cache.backends.memcached import BaseMemcachedCache
+    from django_statsd.clients import statsd
+
+    def decorator(orig):
+        @wraps(orig)
+        def timed(self, *args, **kwargs):
+            key = 'memcached.{}'.format(orig.__name__)
+            with statsd.timer(key):
+                return orig(self, *args, **kwargs)
+        return timed
+
+    for name in ('add', 'get', 'set', 'delete', 'get_many', 'incr', 'decr',
+                 'set_many', 'delete_many'):
+        orig = getattr(BaseMemcachedCache, name)
+        setattr(BaseMemcachedCache, name, decorator(orig))
+
+
 def apply():
     for patch, descr in _patches:
         print(descr)
