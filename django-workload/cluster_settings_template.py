@@ -12,6 +12,7 @@ from django_workload.settings import *
 # Security settings
 SECRET_KEY = '()2uyyko+p=dv*nmu$b5my9px!e0=6r5unm19or$02$-c62%gb'
 DEBUG = False
+ALLOWED_HOSTS = ['localhost', 'ip6-localhost', '127.0.0.1', '::1']
 
 # Cassandra database
 DATABASES['default']['HOST'] = 'localhost'
