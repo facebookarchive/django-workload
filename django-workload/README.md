@@ -10,7 +10,7 @@ directory in this project.
 The uWSGI server binds to *all network interfaces* so this should only be run in
 a firewalled environment.
 
-## setup
+## Setup
 
 On Ubuntu 16.04, you can run:
 
@@ -36,10 +36,23 @@ Cassandra:
 
     DJANGO_SETTINGS_MODULE=cluster_settings django-admin setup
 
-## running
+## Running
 
 Start the service with
 
     uwsgi uwsgi.ini
 
 and you can connect to port 8000 to access the server.
+
+## Debug
+
+If you get HTTP response codes different than 200, change the DEBUG parameter
+in cluster_settings.py:
+
+    DEBUG = True
+
+Then restart the uwsgi instance and go back to the page causing trouble. One of
+the most common problems that cause 400 codes is not having the correct host in
+the ALLOWED_HOSTS list in cluster_settings.py. If accessing the web server from
+a different machine, add the hostname/IP address you are using to access the
+server to ALLOWED_HOSTS.
