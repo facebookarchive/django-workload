@@ -44,6 +44,9 @@ Start the service with
 
 and you can connect to port 8000 to access the server.
 
+The above command should block. If it does not, check the django-uwsgi.log file
+to see what went wrong.
+
 ## Debug
 
 If you get HTTP response codes different than 200, change the DEBUG parameter
