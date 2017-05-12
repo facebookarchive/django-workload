@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
@@ -52,7 +52,7 @@ def parse_urls():
     # write to URL input file for Siege
     with open(URLS_OUT, 'w') as url_file:
         while (total > 0):
-            current_url = random.sample(url_dict, 1)[0]
+            current_url = random.sample(list(url_dict), 1)[0]
             remaining = url_dict[current_url]
             if remaining > 1:
                 url_dict[current_url] = remaining - 1
