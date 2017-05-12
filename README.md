@@ -25,6 +25,10 @@ Once set up, access http://[uwsgi_host:uwsgi_port]/ to see an overview of
 the offered endpoints, or use the load generator to produce a high request
 load on the server.
 
+## Contributing
+
+See the CONTRIBUTING file for how to help out.
+
 ## License
 
 BSD
