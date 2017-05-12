@@ -15,7 +15,7 @@ def all_users():
             # re-check after acquiring the lock, as another thread could have
             # taken it between checking for None and requesting the lock.
             if user_ids is None:
-                user_ids = [u.id for u in UserModel.objects.all()]
+                user_ids = list(UserModel.objects.values_list('id', flat=True))
     return user_ids
 
 
