@@ -82,12 +82,12 @@ case). In order to prevent this, please perform the following steps:
     * hard nofile 1000000
 
     # check original values as this example ouput:
-    ulimit –a | grep open
-    open files      (-n) 1024
+    ulimit -n
+    1024
 
     # reboot system and check the values again:
-    ulimit –a | grep open
-    open files      (-n) 1000000
+    ulimit –n
+    1000000
     # the “open files” value is now set at 1,000,000
 
 Sometimes siege will abort the run if it reaches its own internal error
