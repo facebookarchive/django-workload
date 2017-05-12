@@ -24,6 +24,7 @@ setup(
           'Django >= 1.11',
           'django-cassandra-engine',
           'django-statsd-mozilla',
+          'psutil',
           'pylibmc',
           'statsd >= 3.0',
           'uwsgi >= 2.0.15',

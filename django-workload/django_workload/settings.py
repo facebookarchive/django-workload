@@ -51,6 +51,7 @@ MIDDLEWARE = [
 #    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
     'django_workload.middleware.global_request_middleware',
+    'django_workload.middleware.memory_cpu_stats_middleware',
     'django_workload.middleware.GraphiteRequestTimingMiddleware',
     'django_workload.middleware.GraphiteMiddleware',
 ]
