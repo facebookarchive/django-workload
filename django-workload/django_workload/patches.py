@@ -11,7 +11,7 @@ _patches = []
 
 
 def register_patch(f):
-    _patches.append((f, getdoc(f) or ''))
+    _patches.append((f, (getdoc(f) or '').partition('\n')[0]))
 
 
 # TODO: send a pull request upstream
@@ -54,6 +54,27 @@ def patch_cassandra_execute():
         return timed_execute
 
     CassandraConnection.execute = decorator(CassandraConnection.execute)
+
+
+@register_patch
+def patch_cassandra_uwsgi_postfork():
+    """Reset cassandra connection after forking.
+
+    When running under uwsgi, use postfork to re-set the cassandra connection.
+    Otherwise we run into issues with shared connections which time out.
+
+    """
+    try:
+        from uwsgidecorators import postfork
+    except ImportError:
+        # Not available, presumably we are not running under uwsgi
+        return
+    from django_cassandra_engine.utils import get_cassandra_connections
+
+    @postfork
+    def reset_cassandra_connection():
+        for _, conn in get_cassandra_connections():
+            conn.reconnect()
 
 
 @register_patch
