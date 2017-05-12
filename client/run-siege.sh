@@ -8,4 +8,5 @@
 # -b tells siege to enter benchmarking mode
 # -t 120S specifies the run time of the benchmark, in this case 120 seconds
 # -f urls.txt tells siege which urls to benchmark
-siege -c 144 -b -t 120S -f urls.txt
+# --log=./siege.log specifies the output file
+siege -c 144 -b -t 120S -f urls.txt --log=./siege.log

@@ -2,6 +2,9 @@
 # settings file copied and customised from a template
 django-workload/cluster_settings.py
 
+# Siege output log
+client/siege.log
+
 # Compiled Python scripts
 syntax: glob
 

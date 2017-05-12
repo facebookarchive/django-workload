@@ -33,9 +33,9 @@ Use the ./gen-urls-file to generate a new urls.txt from the urls_template.txt:
 You must have Python installed to run the above script.
 
 # Run siege
-Run siege using the ./run-siege script:
+Run siege using the ./run-siege.sh script:
 
-    ./run-siege
+    ./run-siege.sh
 
 This script can be configured to suit your needs by altering the following
 parameters for Siege:
