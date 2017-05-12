@@ -48,6 +48,7 @@ def patch_cassandra_execute():
         @wraps(orig)
         def timed_execute(self, *args, **kwargs):
             key = 'cassandra.{}.execute'.format(get_view_name())
+            statsd.incr(key)
             with statsd.timer(key):
                 return orig(self, *args, **kwargs)
         return timed_execute
