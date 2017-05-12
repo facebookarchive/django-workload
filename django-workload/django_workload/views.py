@@ -12,6 +12,7 @@ from cassandra.cqlengine.query import BatchQuery
 
 from .users import require_user
 from .feed import Feed
+from .inbox import Inbox
 from .models import (
     BundleEntryModel,
     BundleSeenModel,
@@ -38,6 +39,9 @@ def index(request):
 
 <dt><a href="/bundle_tray">bundle_tray</a></dt>
 <dd>A feed of current bundles, with nested content, from other users</dd>
+
+<dt><a href="/inbox">inbox</a></dt>
+<dd>The inbox view in a mobile app for the current user</dd>
 
 <dt>/seen (POST only endpoint)</dt>
 <dd>A view to increase counters and last-seen timestamps</dd>
@@ -115,6 +119,14 @@ def bundle_tray(request):
         }
         for b in bundles if b.id in first_bundleids
     ]}
+    return HttpResponse(json.dumps(result), content_type='text/json')
+
+
+@require_user
+def inbox(request):
+    # produce an inbox from different sources of information
+    inbox = Inbox(request)
+    result = inbox.results()
     return HttpResponse(json.dumps(result), content_type='text/json')
 
 

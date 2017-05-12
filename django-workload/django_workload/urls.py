@@ -23,5 +23,6 @@ urlpatterns = [
     url(r'^feed_timeline$', views.feed_timeline, name='feed_timeline'),
     url(r'^timeline$', views.timeline, name='timeline'),
     url(r'^bundle_tray$', views.bundle_tray, name='bundle_tray'),
+    url(r'^inbox$', views.inbox, name='inbox'),
     url(r'^seen$', views.seen, name='seen'),
 ]

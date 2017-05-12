@@ -11,8 +11,12 @@ from django_cassandra_engine.management.commands import sync_cassandra
 
 from django_workload.models import (
     BundleEntryModel,
+    CommentedInboxEntryModel,
     FeedEntryModel,
-    UserModel
+    InboxTypes,
+    LikeInboxEntryModel,
+    NewFollowerInboxEntryModel,
+    UserModel,
 )
 
 _latin_chars = map(chr, range(256))
@@ -83,6 +87,28 @@ class Command(BaseCommand):
                 comment_count=random.randrange(10))
             entry.save()
         print('\r       ', end='\r')
+
+        print('Creating 5000 random inbox entries')
+        types = (CommentedInboxEntryModel, LikeInboxEntryModel,
+                 NewFollowerInboxEntryModel)
+        random_dates = islice(random_datetime_generator(), 5000)
+        inboxids = map(uuid_from_time, random_dates)
+        for i, inboxid in enumerate(inboxids):
+            print('\r{} {}'.format(next(spinner), i), end='')
+            inboxtype = random.choice(types)
+            fields = {
+                'userid': random.choice(user_ids),
+                'id': inboxid,
+                'feedentryid': random.choice(feedids),
+                'comment_text': ' '.join([
+                    random_string() for _ in range(random.randrange(3, 10))]),
+                'likerid': random.choice(user_ids),
+                'followerid': random.choice(user_ids),
+            }
+            entry = inboxtype(**fields)
+            entry.save()
+        print('\r       ', end='\r')
+
 
         print('Creating 1000 random bundles')
         random_dates = islice(random_datetime_generator(), 1000)
