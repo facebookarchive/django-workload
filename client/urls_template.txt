@@ -1,0 +1,5 @@
+http://localhost:8000/page1 26
+http://localhost:8000/page2 25
+http://localhost:8000/page3 25
+http://localhost:8000/page4 19
+http://localhost:8000/page5 5
