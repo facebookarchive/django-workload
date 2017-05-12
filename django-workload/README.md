@@ -31,6 +31,11 @@ and edit this to point to the various services running in the cluster:
     cp cluster_settings_template.py cluster_settings.py
     $EDITOR cluster_settings.py
 
+Finally, run the `setup` django command to load the workload dataset into
+Cassandra:
+
+    DJANGO_SETTINGS_MODULE=cluster_settings django-admin setup
+
 ## running
 
 Start the service with
