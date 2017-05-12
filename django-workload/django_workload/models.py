@@ -37,3 +37,15 @@ class FeedEntryModel(DjangoCassandraModel):
     @property
     def published(self):
         return datetime_from_uuid1(self.id)
+
+
+class BundleSeenModel(DjangoCassandraModel):
+    class Meta:
+        # required but meaningless in this context
+        get_pk_field = 'userid'
+
+    userid = columns.UUID(primary_key=True)
+    bundleid = columns.UUID(primary_key=True)
+    ts = columns.TimeUUID(
+        primary_key=True, default=timeuuid_now, clustering_order="DESC")
+    entryid = columns.UUID()

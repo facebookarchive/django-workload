@@ -22,4 +22,5 @@ urlpatterns = [
     url(r'^$', views.index, name='index'),
     url(r'^feed_timeline$', views.feed_timeline, name='feed_timeline'),
     url(r'^timeline$', views.timeline, name='timeline'),
+    url(r'^seen$', views.seen, name='seen'),
 ]
