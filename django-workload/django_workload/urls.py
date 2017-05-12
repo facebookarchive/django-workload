@@ -20,4 +20,5 @@ from . import views
 
 urlpatterns = [
     url(r'^$', views.index, name='index'),
+    url(r'^feed_timeline$', views.feed_timeline, name='feed_timeline'),
 ]
