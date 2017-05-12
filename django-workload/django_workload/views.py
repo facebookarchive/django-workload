@@ -33,7 +33,12 @@ def feed_timeline(request):
     result = {
         'num_results': len(feed),
         'items': [
-            {'pk': str(e.id), 'comment_count': e.comment_count, 'user': user_info}
+            {
+                'pk': str(e.id),
+                'comment_count': e.comment_count,
+                'published': e.published.timestamp(),
+                'user': user_info
+            }
             for e in feed]
     }
     return HttpResponse(json.dumps(result), content_type='text/json')
