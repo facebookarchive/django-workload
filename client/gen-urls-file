@@ -14,19 +14,20 @@ URLS_TEMPLATE = "urls_template.txt"
 URLS_OUT = "urls.txt"
 
 
-def get_int_from_str(str_n):
+def get_int_from_str(str_n, line_no):
     n = 0
 
     try:
         n = int(str_n)
     except ValueError:
         print ("ERROR: Weight number in " + URLS_TEMPLATE + " file"
-               " is not an int\n")
+               " at line " + str(line_no) + " is not an int\n")
         sys.exit(1)
 
     if (n < 1):
         print("ERROR: Please provide weight numbers that are >=1"
-              " in the " + URLS_TEMPLATE + " file\n")
+              " in the " + URLS_TEMPLATE + " file at"
+              " line " + str(line_no) + "\n")
         sys.exit(1)
 
     return n
@@ -35,6 +36,7 @@ def get_int_from_str(str_n):
 def parse_urls():
     url_dict = {}
     total = 0
+    line_no = 1
 
     # read URL template file
     with open(URLS_TEMPLATE) as url_template_file:
@@ -42,14 +44,16 @@ def parse_urls():
             line = line.strip()
             parts = line.split()
             if (len(parts) < 2):
-                print ("ERROR: Invalid format for " + URLS_TEMPLATE + " file\n"
+                print ("ERROR: Invalid format for " + URLS_TEMPLATE + " file"
+                       " at line " + str(line_no) + "\n"
                        "Use the -h option of this program for instructions\n")
                 sys.exit(1)
             weight = parts.pop()
-            repeat = get_int_from_str(weight)
+            repeat = get_int_from_str(weight, line_no)
             total = total + repeat
             request = " ".join(parts)
             url_dict[request] = repeat
+            line_no = line_no + 1
 
     # write to URL input file for Siege
     with open(URLS_OUT, 'w') as url_file:
