@@ -12,7 +12,12 @@ from cassandra.cqlengine.query import BatchQuery
 
 from .users import require_user
 from .feed import Feed
-from .models import BundleSeenModel
+from .models import (
+    BundleEntryModel,
+    BundleSeenModel,
+    FeedEntryModel,
+    UserModel,
+)
 
 
 @cache_page(30)
@@ -30,6 +35,9 @@ def index(request):
 
 <dt><a href="/timeline">timeline</a></dt>
 <dd>A ranked feed of entries from other users</dd>
+
+<dt><a href="/bundle_tray">bundle_tray</a></dt>
+<dd>A feed of current bundles, with nested content, from other users</dd>
 
 <dt>/seen (POST only endpoint)</dt>
 <dd>A view to increase counters and last-seen timestamps</dd>
@@ -64,6 +72,49 @@ def timeline(request):
     # Produce a JSON response containing the feed of entries for a user
     feed = Feed(request)
     result = feed.feed_page()
+    return HttpResponse(json.dumps(result), content_type='text/json')
+
+
+@require_user
+def bundle_tray(request):
+    # Fetch bundles of content from followers to show
+    bundles = list(
+        BundleEntryModel.objects.filter(userid__in=request.user.following)
+        .limit(10))
+    # only one bundle per user
+    userids = {}
+    feedentryids = []
+    for bundle in bundles:
+        if bundle.userid in userids:
+            continue
+        userids[bundle.userid] = bundle.id
+        feedentryids += bundle.entry_ids
+    first_bundleids = set(userids.values())
+    # Fetch user information
+    userinfo = {}
+    for user in UserModel.objects.filter(id__in=list(userids)):
+        userinfo[user.id] = user.json_data
+    # fetch entry information
+    feedentryinfo = {}
+    for feedentry in FeedEntryModel.objects.filter(id__in=list(feedentryids)):
+        feedentryinfo[feedentry.id] = {
+            'pk': str(feedentry.id),
+            'comment_count': feedentry.comment_count,
+            'published': feedentry.published.timestamp(),
+        }
+
+    result = {'bundle': [
+        {
+            'pk': str(b.id),
+            'comment_count': b.comment_count,
+            'published': b.published.timestamp(),
+            'user': userinfo[b.userid],
+            'items': [
+                feedentryinfo[f]
+                for f in bundle.entry_ids if f in feedentryinfo]
+        }
+        for b in bundles if b.id in first_bundleids
+    ]}
     return HttpResponse(json.dumps(result), content_type='text/json')
 
 

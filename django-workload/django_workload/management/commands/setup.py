@@ -3,13 +3,17 @@ import random
 import unicodedata
 
 from datetime import datetime, timedelta
-from itertools import cycle
+from itertools import cycle, islice
 
 from cassandra.util import uuid_from_time
 from django.core.management.base import BaseCommand, CommandError
 from django_cassandra_engine.management.commands import sync_cassandra
 
-from django_workload.models import UserModel, FeedEntryModel
+from django_workload.models import (
+    BundleEntryModel,
+    FeedEntryModel,
+    UserModel
+)
 
 _latin_chars = map(chr, range(256))
 _latin_letters = [c for c in _latin_chars if unicodedata.category(c) == 'Ll']
@@ -70,11 +74,27 @@ class Command(BaseCommand):
         print('\r      ', end='\r')
 
         print('Creating 100k random feed entries')
-        feedids = map(uuid_from_time, random_datetime_generator())
-        for i in range(10**4):
+        random_dates = islice(random_datetime_generator(), 10 ** 4)
+        feedids = [uuid_from_time(t) for t in random_dates]
+        for i, feedid in enumerate(feedids):
             print('\r{} {}'.format(next(spinner), i), end='')
             entry = FeedEntryModel(
-                userid=random.choice(user_ids), id=next(feedids),
+                userid=random.choice(user_ids), id=feedid,
                 comment_count=random.randrange(10))
+            entry.save()
+        print('\r       ', end='\r')
+
+        print('Creating 1000 random bundles')
+        random_dates = islice(random_datetime_generator(), 1000)
+        bundleids = map(uuid_from_time, random_dates)
+        for i, bundleid in enumerate(bundleids):
+            print('\r{} {}'.format(next(spinner), i), end='')
+            entrycount = random.randrange(2, 10)
+            # pick entrycount unique feedids, not to be used again
+            feedids, feedentries = feedids[:-entrycount], feedids[-entrycount:]
+            entry = BundleEntryModel(
+                userid=random.choice(user_ids), id=bundleid,
+                comment_count=random.randrange(10),
+                entry_ids=feedentries)
             entry.save()
         print('\r       ', end='\r')

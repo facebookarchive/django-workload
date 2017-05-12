@@ -1,5 +1,5 @@
 http://localhost:8080/feed_timeline 26
 http://localhost:8080/timeline 25
-http://localhost:8080/page3 25
+http://localhost:8080/bundle_tray 25
 http://localhost:8080/page4 19
 http://localhost:8080/seen POST <seen.json 5

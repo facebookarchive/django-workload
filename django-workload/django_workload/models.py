@@ -43,6 +43,21 @@ class FeedEntryModel(DjangoCassandraModel):
         return datetime_from_uuid1(self.id)
 
 
+class BundleEntryModel(DjangoCassandraModel):
+    class Meta:
+        get_pk_field = 'id'
+
+    userid = columns.UUID(primary_key=True)
+    id = columns.TimeUUID(
+        primary_key=True, default=timeuuid_now, clustering_order="DESC")
+    comment_count = columns.SmallInt(default=0)
+    entry_ids = columns.List(columns.UUID)
+
+    @property
+    def published(self):
+        return datetime_from_uuid1(self.id)
+
+
 class BundleSeenModel(DjangoCassandraModel):
     class Meta:
         # required but meaningless in this context
