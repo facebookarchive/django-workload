@@ -12,7 +12,14 @@ def index(request):
     return HttpResponse('''\
 <html><head><title>Welcome to the Django workload!</title></head>
 <body>
-<H1>Welcome to the Django workload!</H1>
+<h1>Welcome to the Django workload!</h1>
+
+<p>The following views are being tested</p>
+
+<dl>
+<dt><a href="/feed_timeline">feed_timeline</a></dt>
+<dd>A simple per-user feed of entries in time</dd>
+
 </body>
 </html>''')
 
