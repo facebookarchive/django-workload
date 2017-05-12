@@ -25,6 +25,7 @@ setup(
           'django-cassandra-engine',
           'django-statsd-mozilla',
           'pylibmc',
+          'statsd >= 3.0',
           'uwsgi >= 2.0.15',
       ],
       include_package_data=True,
