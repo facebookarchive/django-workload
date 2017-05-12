@@ -7,6 +7,7 @@ import sys
 import parser
 import optparse
 import os
+import random
 
 # input file
 URLS_TEMPLATE = "urls_template.txt"
@@ -14,35 +15,41 @@ URLS_OUT = "urls.txt"
 
 
 def parse_urls():
-    has_error = False
+    url_dict = {}
+    total = 0
 
+    # read URL template file
+    with open(URLS_TEMPLATE) as url_template_file:
+        for line in url_template_file:
+            line = line.strip()
+            parts = line.split()
+            if (len(parts) != 2):
+                print ("ERROR: Invalid format for " + URLS_TEMPLATE + " file\n"
+                       "Use the -h option of this program for instructions\n")
+                sys.exit(1)
+            repeat = 1
+            try:
+                repeat = int(parts[1])
+            except ValueError:
+                print ("ERROR: Weight number in " + URLS_TEMPLATE + " file"
+                       " is not an int\n")
+                sys.exit(1)
+            total = total + repeat
+            url_dict[parts[0]] = repeat
+
+    # write to URL input file for Siege
     with open(URLS_OUT, 'w') as url_file:
-        with open(URLS_TEMPLATE) as url_template_file:
-            for line in url_template_file:
-                line = line.strip()
-                parts = line.split()
-                if (len(parts) != 2):
-                    print ("ERROR: Invalid format for " + URLS_TEMPLATE + " file\n"
-                           "Use the -h option of this program for instructions\n")
-                    has_error = True
-                    break
-                repeat = 1
-                try:
-                    repeat = int(parts[1])
-                except ValueError:
-                    print ("ERROR: Weight number in " + URLS_TEMPLATE + " file"
-                           " is not an int\n")
-                    has_error = True
-                    break
-                while (repeat > 0):
-                    url_file.write(parts[0] + "\n")
-                    repeat = repeat - 1
+        while (total > 0):
+            current_url = random.sample(url_dict, 1)[0]
+            remaining = url_dict[current_url]
+            if remaining > 1:
+                url_dict[current_url] = remaining - 1
+            else:
+                del url_dict[current_url]
+            url_file.write(current_url + "\n")
+            total = total - 1
 
-    if has_error:
-        os.remove(URLS_OUT)
-        sys.exit()
-    else:
-        print ("File " + URLS_OUT + " generated successfully\n")
+    print ("File " + URLS_OUT + " generated successfully\n")
 
 
 def main(argv):
