@@ -30,10 +30,10 @@ def index(request):
 
 <dt><a href="/timeline">timeline</a></dt>
 <dd>A ranked feed of entries from other users</dd>
-</dl>
 
 <dt>/seen (POST only endpoint)</dt>
 <dd>A view to increase counters and last-seen timestamps</dd>
+</dl>
 
 </body>
 </html>''')
@@ -70,6 +70,7 @@ def timeline(request):
 @require_http_methods(['POST'])
 @require_user
 def seen(request):
+    # Record stats for items marked as seen on a mobile device
     # For workload purposes we ignore the posted data, and instead generate
     # some random data of our own, cached in memcached
     bundleids = cache.get('bundleids')
