@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from django.views.decorators.cache import cache_page
 
 from .users import require_user
+from .feed import Feed
 
 
 @cache_page(30)
@@ -19,6 +20,10 @@ def index(request):
 <dl>
 <dt><a href="/feed_timeline">feed_timeline</a></dt>
 <dd>A simple per-user feed of entries in time</dd>
+
+<dt><a href="/timeline">timeline</a></dt>
+<dd>A ranked feed of entries from other users</dd>
+</dl>
 
 </body>
 </html>''')
@@ -41,4 +46,12 @@ def feed_timeline(request):
             }
             for e in feed]
     }
+    return HttpResponse(json.dumps(result), content_type='text/json')
+
+
+@require_user
+def timeline(request):
+    # Produce a JSON response containing the feed of entries for a user
+    feed = Feed(request)
+    result = feed.feed_page()
     return HttpResponse(json.dumps(result), content_type='text/json')

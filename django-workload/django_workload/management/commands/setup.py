@@ -51,12 +51,22 @@ class Command(BaseCommand):
         spinner = cycle('|/-\\')
 
         print('Creating 1000 random users')
+        users = []
         user_ids = []
         for i in range(10**3):
             print('\r{} {}'.format(next(spinner), i), end='')
             user = UserModel(name=random_string(title=True))
             user.save()
+            users.append(user)
             user_ids.append(user.id)
+        print('\r      ', end='\r')
+
+        print('Creating following relationships between these users')
+        for i, user in enumerate(users):
+            print('\r{} {}'.format(next(spinner), i), end='')
+            followers = random.sample(user_ids, random.randrange(50))
+            user.following = [uuid for uuid in followers if user.id != uuid]
+            user.save()
         print('\r      ', end='\r')
 
         print('Creating 100k random feed entries')

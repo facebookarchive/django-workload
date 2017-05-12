@@ -15,6 +15,7 @@ def timeuuid_now():
 class UserModel(DjangoCassandraModel):
     id = columns.UUID(primary_key=True, default=uuid.uuid4)
     name = columns.Text()
+    following = columns.List(columns.UUID)
 
     def feed_entries(self):
         return FeedEntryModel.objects(userid=self.id)
