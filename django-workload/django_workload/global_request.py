@@ -17,7 +17,7 @@ def get_view_name(default='<unknown>'):
     request = get_request()
     if request is None:
         return default
-    return request.resolver_match.url_name or default
+    return getattr(request.resolver_match, 'url_name', default)
 
 
 class ThreadLocalRequest:
