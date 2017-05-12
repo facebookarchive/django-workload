@@ -30,7 +30,7 @@ Use the ./gen-urls-file to generate a new urls.txt from the urls_template.txt:
 
     ./gen-urls-file
 
-You must have Python installed to run the above script.
+You must have Python 3 installed to run the above script.
 
 # Run siege
 Run siege using the ./run-siege.sh script:
@@ -44,7 +44,8 @@ parameters for Siege:
     # -b tells siege to enter benchmarking mode
     # -t 120S specifies the run time of the benchmark, in this case 120 seconds
     # -f urls.txt tells siege which urls to benchmark
-    siege -c 144 -b -t 120S -f urls.txt
+    # --log=./siege.log specifies the output file
+    siege -c ${WORKERS} -b -t ${DURATION} -f ${SOURCE} --log=${LOG}
 
 # Useful system configurations
 Running siege will possibly throw the following error:
