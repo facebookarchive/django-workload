@@ -44,7 +44,7 @@ def feed_timeline(request):
     # Produce a JSON response containing the 'timeline' for a given user
     user = request.user
     feed = user.feed_entries().limit(20)
-    user_info = {'name': user.name, 'pk': str(user.id)}
+    user_info = user.json_data
     result = {
         'num_results': len(feed),
         'items': [

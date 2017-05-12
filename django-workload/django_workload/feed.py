@@ -92,8 +92,7 @@ class FollowedEntries(AsyncStep):
     def run(self):
         entries, usermap = self.prepared_result
         user = self.context.user
-        user_info = {id_: {'name': user.name, 'pk': str(user.id)}
-                     for id_, user in usermap.items()}
+        user_info = {id_: user.json_data for id_, user in usermap.items()}
         self.context.entries = [
             {'entry':{
                 'pk': str(e.id),
@@ -119,7 +118,7 @@ class SuggestedUsers(AsyncStep):
         if suggestions:
             self.context.entries.insert(3, {
                 'suggestions': [
-                    {'name': user.name, 'pk': str(user.id)}
+                    user.json_data
                     for user in suggestions]
             })
 

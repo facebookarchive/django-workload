@@ -20,6 +20,10 @@ class UserModel(DjangoCassandraModel):
     def feed_entries(self):
         return FeedEntryModel.objects(userid=self.id)
 
+    @property
+    def json_data(self):
+        return {'name': self.name, 'pk': str(self.id)}
+
     # allow this to be used as request.user without breaking expectations
     def is_authenticated(self):
         return True
