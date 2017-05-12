@@ -43,6 +43,8 @@ def parse_urls():
     if has_error:
         os.remove(URLS_OUT)
         sys.exit()
+    else:
+        print ("File " + URLS_OUT + " generated successfully\n")
 
 
 def main(argv):
