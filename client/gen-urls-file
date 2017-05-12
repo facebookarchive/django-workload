@@ -41,13 +41,15 @@ def parse_urls():
         for line in url_template_file:
             line = line.strip()
             parts = line.split()
-            if (len(parts) != 2):
+            if (len(parts) < 2):
                 print ("ERROR: Invalid format for " + URLS_TEMPLATE + " file\n"
                        "Use the -h option of this program for instructions\n")
                 sys.exit(1)
-            repeat = get_int_from_str(parts[1])
+            weight = parts.pop()
+            repeat = get_int_from_str(weight)
             total = total + repeat
-            url_dict[parts[0]] = repeat
+            request = " ".join(parts)
+            url_dict[request] = repeat
 
     # write to URL input file for Siege
     with open(URLS_OUT, 'w') as url_file:
