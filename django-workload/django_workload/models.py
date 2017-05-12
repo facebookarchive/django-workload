@@ -19,6 +19,10 @@ class UserModel(DjangoCassandraModel):
     def feed_entries(self):
         return FeedEntries.objects(userid=self.id)
 
+    # allow this to be used as request.user without breaking expectations
+    def is_authenticated(self):
+        return True
+
 
 class FeedEntryModel(DjangoCassandraModel):
     class Meta:
