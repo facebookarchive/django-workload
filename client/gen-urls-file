@@ -14,6 +14,24 @@ URLS_TEMPLATE = "urls_template.txt"
 URLS_OUT = "urls.txt"
 
 
+def get_int_from_str(str_n):
+    n = 0
+
+    try:
+        n = int(str_n)
+    except ValueError:
+        print ("ERROR: Weight number in " + URLS_TEMPLATE + " file"
+               " is not an int\n")
+        sys.exit(1)
+
+    if (n < 1):
+        print("ERROR: Please provide weight numbers that are >=1"
+              " in the " + URLS_TEMPLATE + " file\n")
+        sys.exit(1)
+
+    return n
+
+
 def parse_urls():
     url_dict = {}
     total = 0
@@ -27,13 +45,7 @@ def parse_urls():
                 print ("ERROR: Invalid format for " + URLS_TEMPLATE + " file\n"
                        "Use the -h option of this program for instructions\n")
                 sys.exit(1)
-            repeat = 1
-            try:
-                repeat = int(parts[1])
-            except ValueError:
-                print ("ERROR: Weight number in " + URLS_TEMPLATE + " file"
-                       " is not an int\n")
-                sys.exit(1)
+            repeat = get_int_from_str(parts[1])
             total = total + repeat
             url_dict[parts[0]] = repeat
 
