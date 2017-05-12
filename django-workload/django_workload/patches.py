@@ -42,7 +42,7 @@ def patch_django_statsd_ipv6():
 def patch_cassandra_execute():
     """Record timings for Cassandra operations"""
     from django_statsd.clients import statsd
-    from django_cassandra_engine.connection import CassandraConnection
+    from cassandra.cqlengine.query import AbstractQuerySet
 
     def decorator(orig):
         @wraps(orig)
@@ -53,7 +53,7 @@ def patch_cassandra_execute():
                 return orig(self, *args, **kwargs)
         return timed_execute
 
-    CassandraConnection.execute = decorator(CassandraConnection.execute)
+    AbstractQuerySet._execute = decorator(AbstractQuerySet._execute)
 
 
 @register_patch
