@@ -31,4 +31,4 @@ See the CONTRIBUTING file for how to help out.
 
 ## License
 
-BSD
+Django Workload is BSD-licensed. We also provide an additional patent grant.
