@@ -105,8 +105,8 @@ def parse_results(out_file, single_run):
     max_index = tr_results.index(max(tr_results))
 
     print("Removing results with Transaction rate min=" +
-           str(tr_results[min_index]) + " and max=" +
-           str(tr_results[max_index]) + "\n")
+          str(tr_results[min_index]) + " and max=" +
+          str(tr_results[max_index]) + "\n")
 
     for metric in metrics:
         # remove entry associated with min and max transaction rate. Delete
