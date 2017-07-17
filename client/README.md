@@ -8,9 +8,10 @@ benchmark the Python Django Workload.
 This setup relies on the host system having Siege installed. We will guide you
 on how to make best use of this tool.
 
-To install Siege on Ubuntu 16.04, issue the following command:
+To install Siege and the dependencies for the runner script on Ubuntu 16.04,
+issue the following command:
 
-    apt-get install siege
+    apt-get install siege python3-numpy
 
 This will install Siege version 3.0.8. There are no known version requirements
 for Siege at the moment, although older versions might not allow concurrency
@@ -33,19 +34,25 @@ Use the ./gen-urls-file to generate a new urls.txt from the urls_template.txt:
 You must have Python 3 installed to run the above script.
 
 # Run siege
-Run siege using the ./run-siege.sh script:
+Run siege using the ./run-siege script:
 
-    ./run-siege.sh
+    ./run-siege
 
 This script can be configured to suit your needs by altering the following
-parameters for Siege:
+environment variables that change the Siege parameters:
 
-    # -c specifies the number of workers
-    # -b tells siege to enter benchmarking mode
-    # -t 120S specifies the run time of the benchmark, in this case 120 seconds
-    # -f urls.txt tells siege which urls to benchmark
-    # --log=./siege.log specifies the output file
-    siege -c ${WORKERS} -b -t ${DURATION} -f ${SOURCE} --log=${LOG}
+    WORKERS     - specifies the number of concurrent Siege workers
+    DURATION    - specifies the run time of the benchmark, in the format "XY",
+                  where X is a number and Y is the time unit (H, M or S, for
+                  hours, minutes or seconds)
+    LOG         - specifies the log file for Siege
+    SOURCE      - specifies the input file that tells Siege what urls to
+                  benchmark
+
+The command above that launches the Siege client is equivalent to the command
+below, where the configuration parameters have the default value:
+
+    WORKERS=144 DURATION=2M LOG=./siege.log SOURCE=urls.txt ./run-siege
 
 # Useful system configurations
 Running siege will possibly throw the following error:
