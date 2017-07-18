@@ -1,0 +1,157 @@
+#!/usr/bin/python3
+#
+# This source code is licensed under the license found in the
+# LICENSE file in the root directory of this source tree.
+
+import optparse
+import os
+import subprocess
+import re
+import numpy as np
+
+# Concurrent worker count
+WORKERS = 144
+
+# Test duration (units are H, M or S, for hours, minutes or seconds)
+DURATION = "2M"
+
+# Log file (outputs CSV rows)
+LOG = "./siege.log"
+
+# Source file
+SOURCE = "urls.txt"
+
+
+def delete_file(f):
+    try:
+        os.remove(f)
+    except OSError:
+        pass
+
+
+def setup_variables():
+    global WORKERS
+    global DURATION
+    global LOG
+    global SOURCE
+
+    if "WORKERS" in os.environ:
+        WORKERS = os.environ["WORKERS"]
+    if "DURATION" in os.environ:
+        DURATION = os.environ["DURATION"]
+    if "LOG" in os.environ:
+        LOG = os.environ["LOG"]
+    if "SOURCE" in os.environ:
+        SOURCE = os.environ["SOURCE"]
+
+
+def run_siege(options):
+    out_file = "siege_out.txt"
+    cmd = "siege -c " + str(WORKERS) + "-b -t " + DURATION
+    cmd = cmd + " -f " + SOURCE + " --log=" + LOG + " &>> " + out_file
+
+    delete_file(out_file)
+
+    # perform 7 runs, discard the min and max Transaction rate numbers and
+    # display average of Siege metrics. Perform a single run if "-s" option
+    # is used
+    for i in range(7):
+        print("Running iteration " + str(i + 1), end="", flush=True)
+        subprocess.check_output(['bash', '-c', cmd])
+        print(" --- DONE")
+
+        # only do one run if the "single" option is set
+        if options.single:
+            break
+
+    print()
+    parse_results(out_file, options.single)
+    print("\nFull Siege output is available in " + out_file)
+
+
+def parse_results(out_file, single_run):
+    results = {}
+    unit_measures = {}
+    metrics = ["Transactions", "Availability", "Elapsed time",
+               "Data transferred", "Response time", "Transaction rate",
+               "Throughput", "Concurrency", "Successful transactions",
+               "Failed transactions", "Longest transaction",
+               "Shortest transaction"]
+
+    # populate results with empty lists
+    for metric in metrics:
+        results[metric] = []
+
+    for line in open(out_file, 'r'):
+        for metric in metrics:
+            if re.search(metric, line):
+                if single_run:
+                    print(line, end='')
+                else:
+                    res = line.replace(metric + ":", "").strip()
+                    values = res.split()
+                    if len(values) == 1:
+                        unit_measures[metric] = ""
+                    elif len(values) == 2:
+                        unit_measures[metric] = values[1]
+                    results[metric].append(float(values[0]))
+
+    if single_run:
+        return
+
+    # find min and max from result list
+    tr_results = results["Transaction rate"]
+    min_index = tr_results.index(min(tr_results))
+    max_index = tr_results.index(max(tr_results))
+
+    print("Removing results with Transaction rate min=" +
+          str(tr_results[min_index]) + " and max=" +
+          str(tr_results[max_index]) + "\n")
+
+    for metric in metrics:
+        # remove entry associated with min and max transaction rate. Delete
+        # larger index first so that the other index does not change
+        if min_index < max_index:
+            del results[metric][max_index]
+            del results[metric][min_index]
+        else:
+            del results[metric][min_index]
+            del results[metric][max_index]
+
+        print(padding(metric), end="")
+        arr = np.array(results[metric])
+        arr_mean = np.mean(arr)
+        if arr_mean > 0:
+            arr_rsd = np.std(arr) / arr_mean
+        else:
+            arr_rsd = 0.0
+        print(str(arr_mean) + " " + unit_measures[metric], end="")
+        print(" ---- RSD " + str(arr_rsd))
+
+
+def padding(string):
+    tabno = 5
+    tabs_already = (len(string) + 1) // 8
+    tabs_left = int(tabno - tabs_already)
+    result = string + ":" + ("\t" * tabs_left)
+    return result
+
+
+def main():
+    parser = optparse.OptionParser(
+        usage="%prog [options]",
+        description=("Run the Django Workload using the Siege load " +
+                     "generator multiple times and display an average of " +
+                     "the results"))
+
+    parser.add_option("-s", "--single", action="store_true", dest="single",
+                      default=False, help="Do a single run of the workload")
+
+    (options, args) = parser.parse_args()
+
+    setup_variables()
+    run_siege(options)
+
+
+if __name__ == "__main__":
+    main()
