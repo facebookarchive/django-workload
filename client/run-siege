@@ -21,6 +21,9 @@ LOG = "./siege.log"
 # Source file
 SOURCE = "urls.txt"
 
+# Full output file for Siege
+SIEGE_OUT_FILE = "/tmp/siege_out"
+
 
 def delete_file(f):
     try:
@@ -46,87 +49,123 @@ def setup_variables():
 
 
 def run_siege(options):
-    out_file = "siege_out.txt"
-    cmd = "siege -c " + str(WORKERS) + "-b -t " + DURATION
-    cmd = cmd + " -f " + SOURCE + " --log=" + LOG + " &>> " + out_file
-
-    delete_file(out_file)
+    cmd = "siege -v -c " + str(WORKERS) + "-b -t " + DURATION
+    cmd = cmd + " -f " + SOURCE + " --log=" + LOG + " &>> "
+    iterations = 7
 
     # perform 7 runs, discard the min and max Transaction rate numbers and
     # display average of Siege metrics. Perform a single run if "-s" option
     # is used
-    for i in range(7):
+    for i in range(iterations):
+        current_file = SIEGE_OUT_FILE + "_" + str(i + 1)
+        delete_file(current_file)
+        current_cmd = cmd + current_file
+
         print("Running iteration " + str(i + 1), end="", flush=True)
-        subprocess.check_output(['bash', '-c', cmd])
+        subprocess.check_output(['bash', '-c', current_cmd])
         print(" --- DONE")
 
         # only do one run if the "single" option is set
         if options.single:
+            iterations = 1
             break
 
     print()
-    parse_results(out_file, options.single)
-    print("\nFull Siege output is available in " + out_file)
+    parse_results(iterations)
+    print("\nFull Siege output is available in " + SIEGE_OUT_FILE + "_[N]")
 
 
-def parse_results(out_file, single_run):
+def get_percentiles(latencies):
+    percentiles = {}
+    count = len(latencies)
+
+    if count > 0:
+        latencies.sort()
+        percentiles["P50"] = latencies[int(0.5 * count)]
+        percentiles["P90"] = latencies[int(0.9 * count)]
+        percentiles["P95"] = latencies[int(0.95 * count)]
+        percentiles["P99"] = latencies[int(0.99 * count)]
+    else:
+        percentiles["P50"] = -1
+        percentiles["P90"] = -1
+        percentiles["P95"] = -1
+        percentiles["P99"] = -1
+
+    return percentiles
+
+
+def parse_results(iterations):
     results = {}
-    unit_measures = {}
-    metrics = ["Transactions", "Availability", "Elapsed time",
-               "Data transferred", "Response time", "Transaction rate",
-               "Throughput", "Concurrency", "Successful transactions",
-               "Failed transactions", "Longest transaction",
-               "Shortest transaction"]
+    unit_measures = {"P50": "secs", "P90": "secs",
+                     "P95": "secs", "P99": "secs"}
+    siege_metrics = ["Transactions", "Availability", "Elapsed time",
+                     "Data transferred", "Response time", "Transaction rate",
+                     "Throughput", "Concurrency", "Successful transactions",
+                     "Failed transactions", "Longest transaction",
+                     "Shortest transaction"]
+    p_metrics = ["P50", "P90", "P95", "P99"]
+    all_metrics = siege_metrics + p_metrics
 
     # populate results with empty lists
-    for metric in metrics:
+    for metric in all_metrics:
         results[metric] = []
 
-    for line in open(out_file, 'r'):
-        for metric in metrics:
-            if re.search(metric, line):
-                if single_run:
-                    print(line, end='')
-                else:
-                    res = line.replace(metric + ":", "").strip()
-                    values = res.split()
-                    if len(values) == 1:
-                        unit_measures[metric] = ""
-                    elif len(values) == 2:
-                        unit_measures[metric] = values[1]
-                    results[metric].append(float(values[0]))
+    for i in range(iterations):
+        latencies = []
+        out_file = SIEGE_OUT_FILE + "_" + str(i + 1)
+        for line in open(out_file, 'r'):
+            if re.search("HTTP/1.1 200", line):
+                values = line.strip().split()
+                if len(values) >= 3:
+                    latencies.append(float(values[2]))
+            else:
+                for metric in siege_metrics:
+                    if re.search(metric, line):
+                        res = line.replace(metric + ":", "").strip()
+                        values = res.split()
+                        if len(values) == 1:
+                            unit_measures[metric] = ""
+                        elif len(values) == 2:
+                            unit_measures[metric] = values[1]
+                        results[metric].append(float(values[0]))
+        percentiles = get_percentiles(latencies)
+        for metric in p_metrics:
+            results[metric].append(percentiles[metric])
 
-    if single_run:
-        return
+    if iterations > 1:
+        # find min and max from result list
+        tr_results = results["Transaction rate"]
+        min_index = tr_results.index(min(tr_results))
+        max_index = tr_results.index(max(tr_results))
 
-    # find min and max from result list
-    tr_results = results["Transaction rate"]
-    min_index = tr_results.index(min(tr_results))
-    max_index = tr_results.index(max(tr_results))
+        print("Removing results with Transaction rate min=" +
+              str(tr_results[min_index]) + " and max=" +
+              str(tr_results[max_index]) + "\n")
 
-    print("Removing results with Transaction rate min=" +
-          str(tr_results[min_index]) + " and max=" +
-          str(tr_results[max_index]) + "\n")
-
-    for metric in metrics:
-        # remove entry associated with min and max transaction rate. Delete
-        # larger index first so that the other index does not change
-        if min_index < max_index:
-            del results[metric][max_index]
-            del results[metric][min_index]
-        else:
-            del results[metric][min_index]
-            del results[metric][max_index]
+    for metric in all_metrics:
+        if iterations > 1:
+            # remove entry associated with min and max transaction rate. Delete
+            # larger index first so that the other index does not change
+            if min_index < max_index:
+                del results[metric][max_index]
+                del results[metric][min_index]
+            else:
+                del results[metric][min_index]
+                del results[metric][max_index]
 
         print(padding(metric), end="")
+
         arr = np.array(results[metric])
         arr_mean = np.mean(arr)
-        if arr_mean > 0:
-            arr_rsd = np.std(arr) / arr_mean
+        if arr_mean >= 0:
+            if arr_mean == 0:
+                arr_rsd = 0
+            else:
+                arr_rsd = np.std(arr) / arr_mean
+            print(str(arr_mean) + " " + unit_measures[metric], end="")
+            print(" ---- RSD " + str(arr_rsd))
         else:
-            arr_rsd = 0.0
-        print(str(arr_mean) + " " + unit_measures[metric], end="")
-        print(" ---- RSD " + str(arr_rsd))
+            print("N/A, please check Siege output file(s)")
 
 
 def padding(string):
