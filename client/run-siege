@@ -57,7 +57,7 @@ def run_siege(options):
     # display average of Siege metrics. Perform a single run if "-s" option
     # is used
     for i in range(iterations):
-        current_file = SIEGE_OUT_FILE + "_" + str(i)
+        current_file = SIEGE_OUT_FILE + "_" + str(i + 1)
         delete_file(current_file)
         current_cmd = cmd + current_file
 
@@ -96,12 +96,13 @@ def get_percentiles(latencies):
 
 def parse_results(iterations):
     results = {}
-    unit_measures = {"P50":"secs", "P90":"secs", "P95":"secs", "P99":"secs"}
+    unit_measures = {"P50": "secs", "P90": "secs",
+                     "P95": "secs", "P99": "secs"}
     siege_metrics = ["Transactions", "Availability", "Elapsed time",
-               "Data transferred", "Response time", "Transaction rate",
-               "Throughput", "Concurrency", "Successful transactions",
-               "Failed transactions", "Longest transaction",
-               "Shortest transaction"]
+                     "Data transferred", "Response time", "Transaction rate",
+                     "Throughput", "Concurrency", "Successful transactions",
+                     "Failed transactions", "Longest transaction",
+                     "Shortest transaction"]
     p_metrics = ["P50", "P90", "P95", "P99"]
     all_metrics = siege_metrics + p_metrics
 
@@ -111,7 +112,7 @@ def parse_results(iterations):
 
     for i in range(iterations):
         latencies = []
-        out_file = SIEGE_OUT_FILE + "_" + str(i)
+        out_file = SIEGE_OUT_FILE + "_" + str(i + 1)
         for line in open(out_file, 'r'):
             if re.search("HTTP/1.1 200", line):
                 values = line.strip().split()
@@ -153,6 +154,7 @@ def parse_results(iterations):
                 del results[metric][max_index]
 
         print(padding(metric), end="")
+
         arr = np.array(results[metric])
         arr_mean = np.mean(arr)
         if arr_mean >= 0:
