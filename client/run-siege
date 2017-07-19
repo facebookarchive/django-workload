@@ -113,7 +113,7 @@ def parse_results(iterations):
         latencies = []
         out_file = SIEGE_OUT_FILE + "_" + str(i)
         for line in open(out_file, 'r'):
-            if re.search("HTTP/1.1", line):
+            if re.search("HTTP/1.1 200", line):
                 values = line.strip().split()
                 if len(values) >= 3:
                     latencies.append(float(values[2]))
