@@ -24,6 +24,45 @@ SOURCE = "urls.txt"
 # Full output file for Siege
 SIEGE_OUT_FILE = "/tmp/siege_out"
 
+# URL template file
+URLS_TEMPLATE_FILE = "urls_template.txt"
+
+
+def parse_urls(url_file):
+    url_dict = {}
+    url_target = {}
+
+    try:
+        line_count = 0
+
+        for line in open(url_file, 'r'):
+            values = line.strip().split()
+            val_len = len(values)
+            line_count += 1
+
+            # The URL_TEMPLATE file must only have lines that respect the
+            # format "URL [POST [<in_file]] weight"
+            if val_len >= 2:
+                url_components = values[0].split("/")
+                comp_len = len(url_components)
+                short_url = "/" + url_components[comp_len - 1]
+                url_dict[short_url] = []
+                url_target[short_url] = values[val_len - 1]
+            else:
+                print("ERROR: Unable to parse " + URLS_TEMPLATE_FILE)
+                print("The " + URLS_TEMPLATE_FILE + " must only have lines that "
+                      "respect the format \"URL [POST [<in_file]] weight\"\n")
+                exit(1)
+
+        if line_count == 0:
+            print("ERROR: " + URLS_TEMPLATE_FILE + " is empty\n")
+            exit(1)
+    except FileNotFoundError:
+        print("ERROR: Unable to parse " + URLS_TEMPLATE_FILE + ": file not found\n")
+        exit(1)
+
+    return [url_dict, url_target]
+
 
 def delete_file(f):
     try:
@@ -48,10 +87,45 @@ def setup_variables():
         SOURCE = os.environ["SOURCE"]
 
 
+def validate_output(siege_file):
+    http_error_codes = 0
+    socket_timeouts = 0
+    conn_refused = 0
+    has_warning = False
+
+    for line in open(siege_file, 'r'):
+        if re.search("HTTP/1.1", line):
+            values = line.strip().split()
+
+            # Only expecting 200 codes
+            if len(values) >= 9 and values[1] != "200":
+                http_error_codes += 1
+        elif re.search("Connection timed out", line):
+            socket_timeouts += 1
+        elif re.search("Connection refused", line):
+            conn_refused += 1
+
+    if http_error_codes > 0:
+        print("WARNING: Got " + str(http_error_codes) + " HTTP "
+              "codes different than 200")
+        has_warning = True
+    if socket_timeouts > 0:
+        print("WARNING: Got " + str(socket_timeouts) + " socket timeout "
+              "alerts")
+        has_warning = True
+    if conn_refused > 0:
+        print("WARNING: Got " + str(conn_refused) + " connection refused "
+              "errors")
+        has_warning = True
+    if has_warning:
+        print("Please see full Siege log in " + siege_file + "\n")
+
+
 def run_siege(options):
     cmd = "siege -v -c " + str(WORKERS) + "-b -t " + DURATION
     cmd = cmd + " -f " + SOURCE + " --log=" + LOG + " &>> "
     iterations = 7
+    url_dict, url_target = parse_urls(URLS_TEMPLATE_FILE)
 
     # perform 7 runs, discard the min and max Transaction rate numbers and
     # display average of Siege metrics. Perform a single run if "-s" option
@@ -65,13 +139,16 @@ def run_siege(options):
         subprocess.check_output(['bash', '-c', current_cmd])
         print(" --- DONE")
 
+        # check for error codes or request time-out
+        validate_output(current_file)
+
         # only do one run if the "single" option is set
         if options.single:
             iterations = 1
             break
 
     print()
-    parse_results(iterations)
+    parse_results(iterations, url_dict, url_target)
     print("\nFull Siege output is available in " + SIEGE_OUT_FILE + "_[N]")
 
 
@@ -94,7 +171,25 @@ def get_percentiles(latencies):
     return percentiles
 
 
-def parse_results(iterations):
+def update_percentages(url_dict, local_hits, total_hits):
+    for url in url_dict:
+        current_perc = 0
+
+        if url in local_hits:
+            if total_hits > 0:
+                current_perc = float(local_hits[url]) / total_hits
+        url_dict[url].append(current_perc)
+    return url_dict
+
+
+def match(url_dict, url_str):
+    for key in url_dict:
+        if re.search(key, url_str):
+            return key
+    return ""
+
+
+def parse_results(iterations, url_dict, url_target):
     results = {}
     unit_measures = {"P50": "secs", "P90": "secs",
                      "P95": "secs", "P99": "secs"}
@@ -113,11 +208,22 @@ def parse_results(iterations):
     for i in range(iterations):
         latencies = []
         out_file = SIEGE_OUT_FILE + "_" + str(i + 1)
+        local_hits = {}
+        total_200_hits = 0
+
         for line in open(out_file, 'r'):
             if re.search("HTTP/1.1 200", line):
                 values = line.strip().split()
-                if len(values) >= 3:
+                if len(values) >= 9:
                     latencies.append(float(values[2]))
+                    total_200_hits += 1
+                    curr_url = match(url_dict, values[8])
+                    if len(curr_url) == 0:
+                        continue
+                    if curr_url in local_hits:
+                        local_hits[curr_url] = local_hits[curr_url] + 1
+                    else:
+                        local_hits[curr_url] = 1
             else:
                 for metric in siege_metrics:
                     if re.search(metric, line):
@@ -128,6 +234,7 @@ def parse_results(iterations):
                         elif len(values) == 2:
                             unit_measures[metric] = values[1]
                         results[metric].append(float(values[0]))
+        url_dict = update_percentages(url_dict, local_hits, total_200_hits)
         percentiles = get_percentiles(latencies)
         for metric in p_metrics:
             results[metric].append(percentiles[metric])
@@ -142,18 +249,27 @@ def parse_results(iterations):
               str(tr_results[min_index]) + " and max=" +
               str(tr_results[max_index]) + "\n")
 
+        # remove entry associated with min and max transaction rate. Delete
+        # larger index first so that the other index does not change
+        first_idx, second_idx = sorted([min_index, max_index])
+
+    print("URL hit percentages:")
+    for url in url_dict:
+        if iterations > 1:
+            del url_dict[url][second_idx]
+            del url_dict[url][first_idx]
+        arr = np.array(url_dict[url])
+        arr_mean = np.mean(arr) * 100
+        print(padding(url, 3), end="")
+        print(str(arr_mean) + "%, expected " + str(url_target[url]) + "%")
+    print()
+
     for metric in all_metrics:
         if iterations > 1:
-            # remove entry associated with min and max transaction rate. Delete
-            # larger index first so that the other index does not change
-            if min_index < max_index:
-                del results[metric][max_index]
-                del results[metric][min_index]
-            else:
-                del results[metric][min_index]
-                del results[metric][max_index]
+            del results[metric][second_idx]
+            del results[metric][first_idx]
 
-        print(padding(metric), end="")
+        print(padding(metric, 5), end="")
 
         arr = np.array(results[metric])
         arr_mean = np.mean(arr)
@@ -168,8 +284,7 @@ def parse_results(iterations):
             print("N/A, please check Siege output file(s)")
 
 
-def padding(string):
-    tabno = 5
+def padding(string, tabno):
     tabs_already = (len(string) + 1) // 8
     tabs_left = int(tabno - tabs_already)
     result = string + ":" + ("\t" * tabs_left)
