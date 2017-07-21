@@ -3,9 +3,6 @@
 ## Requirements
 This directory sets up a Cassandra NoSQL server.
 
-The server binds to *all network interfaces* so this should only be run in a
-firewalled environment.
-
 ## Setup
 This setup relies on the host system having Cassandra installed, we merely
 provide configuration as needed.
@@ -24,11 +21,13 @@ On Ubuntu 16.04 issue the following commands as root:
     apt-get update
     apt-get install cassandra
 
-Configure cassandra to listen to a public IP address. Please do protect this
+If you configure cassandra to listen to a public IP address, please do protect this
 cluster with a firewall to prevent unauthorised access!
 
-Edit `/etc/cassandra/cassandra.yml` to replace the `listen_address` configuration
-with `listen_address 0.0.0.0`, then restart with `systemctl restart cassandra`.
+To change the default listen address for Cassandra (localhost), edit
+`/etc/cassandra/cassandra.yaml` to replace the `listen_address` configuration
+with `listen_address <desired_ip_address>`. If planning to deploy Cassandra
+on the same machine as uWSGI, this parameter does not need changing.
 
 There seems to be an issue with cassandra expecting the output of `hostname` to
 resolve to either an ipv4 address or to localhost; if you see an error about
