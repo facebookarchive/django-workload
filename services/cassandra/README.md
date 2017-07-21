@@ -44,7 +44,8 @@ concurrent_writes: 128
 concurrent_counter_writes: 128
 ```
 The values above are suitable for a 2-socket Broadwell-EP server with 22 cores
-per socket. These values might need to be changed depending on the platform.
+per socket, with all services running on the same machine (Memcached, Cassandra,
+uWSGI). These values might need to be changed depending on the platform.
 
 Because the `concurrent_materialized_view_writes` feature is not necessary for
 the Django Workload, it should be commented out:
