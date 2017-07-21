@@ -10,7 +10,7 @@ firewalled environment.
 This setup relies on the host system having Cassandra installed, we merely
 provide configuration as needed.
 
-On Ubuntu 16.4 issue the following commands as root:
+On Ubuntu 16.04 issue the following commands as root:
 
     # Installing dependencies and Java 8, accepting prompts
     apt-get install software-properties-common curl
@@ -18,8 +18,8 @@ On Ubuntu 16.4 issue the following commands as root:
     apt-get update
     apt-get install oracle-java8-installer
 
-    # install Cassandra, from http://cassandra.apache.org/download/
-    echo "deb http://www.apache.org/dist/cassandra/debian 310x main" | tee -a /etc/apt/sources.list.d/cassandra.sources.list
+    # install Cassandra 3.0.14, from http://cassandra.apache.org/download/
+    echo "deb http://www.apache.org/dist/cassandra/debian 30x main" | tee -a /etc/apt/sources.list.d/cassandra.sources.list
     curl https://www.apache.org/dist/cassandra/KEYS | apt-key add -
     apt-get update
     apt-get install cassandra
