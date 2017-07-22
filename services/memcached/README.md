@@ -17,3 +17,10 @@ then the ./run-memcached script to run a new, separate server, as root (the
 daemon switches to `memcache` user after starting)
 
     sudo ./run-memcached
+
+## Logging
+If needed, logging can be enabled for Memcached by adding the `-vv` switch in
+the run-memcached script:
+```
+/usr/bin/memcached -vv -u $USER -m $MEMORY -l $LISTEN -p $PORT
+```
