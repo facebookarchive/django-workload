@@ -49,6 +49,15 @@ to see what went wrong.
 
 ## Debug
 
+### uWSGI Logging
+Logging for uWSGI is turned off by default for benchmarking purposes. In order
+to turn it back on, comment out the `disable-logging` parameter in uwsgi.ini,
+like this:
+```
+#disable-logging = True
+```
+
+### Django debugging
 If you get HTTP response codes different than 200, change the DEBUG parameter
 in cluster_settings.py:
 
