@@ -95,7 +95,12 @@ following options in `/etc/cassandra/jvm.options`:
 -XX:+AlwaysPreTouch
 -XX:+UnlockDiagnosticVMOptions
 -XX:ParGCCardsPerStrideChunk=4096
+```
 
+## Logging
+If needed, logging can be enabled for Cassandra by adding the following flags
+to `/etc/cassandra/jvm.options`:
+```
 # Logging
 -XX:+PrintGCDetails
 -XX:+PrintGCDateStamps
