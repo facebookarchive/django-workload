@@ -25,6 +25,16 @@ Once set up, access http://[uwsgi_host:uwsgi_port]/ to see an overview of
 the offered endpoints, or use the load generator to produce a high request
 load on the server.
 
+## Benchmarking configuration
+
+The default benchmarking parameters used for Siege, Memcached and uWSGI are
+suitable for driving high CPU utilization (>80%) in server environments:
+```
+uWSGI concurrent workers – 88
+Memcached threads – 16
+Siege Concurrency – 185
+```
+
 ## Contributing
 
 See the [CONTRIBUTING](/CONTRIBUTING.md) file for how to help out.
