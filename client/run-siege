@@ -122,7 +122,7 @@ def validate_output(siege_file):
 
 
 def run_siege(options):
-    cmd = "siege -v -c " + str(WORKERS) + "-b -t " + DURATION
+    cmd = "siege -v -c " + str(WORKERS) + " -b -t " + DURATION
     cmd = cmd + " -f " + SOURCE + " --log=" + LOG + " &>> "
     iterations = 7
     url_dict, url_target = parse_urls(URLS_TEMPLATE_FILE)
