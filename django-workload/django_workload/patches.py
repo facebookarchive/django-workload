@@ -11,7 +11,7 @@ from statsd.defaults import django as statsd_django_defaults
 from statsd.client import StatsClient
 
 from .global_request import get_view_name
-
+from django.conf import settings
 
 _patches = []
 
@@ -44,22 +44,23 @@ def patch_django_statsd_ipv6():
             raise
 
 
-@register_patch
-def patch_cassandra_execute():
-    """Record timings for Cassandra operations"""
-    from django_statsd.clients import statsd
-    from cassandra.cqlengine.query import AbstractQuerySet
+if settings.PROFILING:
+    @register_patch
+    def patch_cassandra_execute():
+        """Record timings for Cassandra operations"""
+        from django_statsd.clients import statsd
+        from cassandra.cqlengine.query import AbstractQuerySet
 
-    def decorator(orig):
-        @wraps(orig)
-        def timed_execute(self, *args, **kwargs):
-            key = 'cassandra.{}.execute'.format(get_view_name())
-            statsd.incr(key)
-            with statsd.timer(key):
-                return orig(self, *args, **kwargs)
-        return timed_execute
+        def decorator(orig):
+            @wraps(orig)
+            def timed_execute(self, *args, **kwargs):
+                key = 'cassandra.{}.execute'.format(get_view_name())
+                statsd.incr(key)
+                with statsd.timer(key):
+                    return orig(self, *args, **kwargs)
+            return timed_execute
 
-    AbstractQuerySet._execute = decorator(AbstractQuerySet._execute)
+        AbstractQuerySet._execute = decorator(AbstractQuerySet._execute)
 
 
 @register_patch
@@ -83,24 +84,25 @@ def patch_cassandra_uwsgi_postfork():
             conn.reconnect()
 
 
-@register_patch
-def patch_memcached_methods():
-    """Record timings for the Memcached Django integration"""
-    from django.core.cache.backends.memcached import BaseMemcachedCache
-    from django_statsd.clients import statsd
+if settings.PROFILING:
+    @register_patch
+    def patch_memcached_methods():
+        """Record timings for the Memcached Django integration"""
+        from django.core.cache.backends.memcached import BaseMemcachedCache
+        from django_statsd.clients import statsd
 
-    def decorator(orig):
-        @wraps(orig)
-        def timed(self, *args, **kwargs):
-            key = 'memcached.{}.{}'.format(get_view_name(), orig.__name__)
-            with statsd.timer(key):
-                return orig(self, *args, **kwargs)
-        return timed
+        def decorator(orig):
+            @wraps(orig)
+            def timed(self, *args, **kwargs):
+                key = 'memcached.{}.{}'.format(get_view_name(), orig.__name__)
+                with statsd.timer(key):
+                    return orig(self, *args, **kwargs)
+            return timed
 
-    for name in ('add', 'get', 'set', 'delete', 'get_many', 'incr', 'decr',
-                 'set_many', 'delete_many'):
-        orig = getattr(BaseMemcachedCache, name)
-        setattr(BaseMemcachedCache, name, decorator(orig))
+        for name in ('add', 'get', 'set', 'delete', 'get_many', 'incr', 'decr',
+                     'set_many', 'delete_many'):
+            orig = getattr(BaseMemcachedCache, name)
+            setattr(BaseMemcachedCache, name, decorator(orig))
 
 
 def apply():
