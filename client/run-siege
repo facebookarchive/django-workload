@@ -10,7 +10,7 @@ import re
 import numpy as np
 
 # Concurrent worker count
-WORKERS = 144
+WORKERS = 185
 
 # Test duration (units are H, M or S, for hours, minutes or seconds)
 DURATION = "2M"

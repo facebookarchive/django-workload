@@ -15,4 +15,4 @@ PORT="${PORT:-11811}"
 # User to run under
 USER="${USER:-memcache}"
 
-/usr/bin/memcached -u $USER -m $MEMORY -l $LISTEN -p $PORT
+/usr/bin/memcached -u $USER -m $MEMORY -l $LISTEN -p $PORT -t 16
