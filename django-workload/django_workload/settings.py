@@ -21,6 +21,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# Enable/Disable profiling
+PROFILING = True
 
 # Application definition
 

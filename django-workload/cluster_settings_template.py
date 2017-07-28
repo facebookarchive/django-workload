@@ -23,3 +23,11 @@ STATSD_PORT = 8125
 
 # Memcached connection
 CACHES['default']['LOCATION'] = '127.0.0.1:11811'
+
+# Enable/disable profiling
+PROFILING = False
+
+if not PROFILING:
+    MIDDLEWARE.remove('django_workload.middleware.memory_cpu_stats_middleware')
+    MIDDLEWARE.remove('django_workload.middleware.GraphiteRequestTimingMiddleware')
+    MIDDLEWARE.remove('django_workload.middleware.GraphiteMiddleware')

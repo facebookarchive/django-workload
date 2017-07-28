@@ -13,6 +13,7 @@ from django.http import HttpResponse
 from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_http_methods
 from django_statsd.clients import statsd
+from django.conf import settings
 
 from cassandra.cqlengine.query import BatchQuery
 
@@ -153,10 +154,12 @@ def seen(request):
 
     with statsd.pipeline() as pipe, BatchQuery() as b:
         for bundleid in random.sample(bundleids, random.randrange(3)):
-            pipe.incr('workloadoutput.bundle.{}.seen'.format(bundleid.hex))
+            if settings.PROFILING:
+                pipe.incr('workloadoutput.bundle.{}.seen'.format(bundleid.hex))
             for entryid in random.sample(entryids, random.randrange(5)):
-                pipe.incr('workloadoutput.bundle.{}.{}.seen'.format(
-                    bundleid.hex, entryid.hex))
+                if settings.PROFILING:
+                    pipe.incr('workloadoutput.bundle.{}.{}.seen'.format(
+                        bundleid.hex, entryid.hex))
                 BundleSeenModel(
                     userid=request.user.id, bundleid=bundleid, entryid=entryid
                 ).save()
