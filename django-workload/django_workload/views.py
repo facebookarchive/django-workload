@@ -27,6 +27,9 @@ from .models import (
     UserModel,
 )
 
+# Used for sample-based profiling
+SAMPLE_COUNT = 0
+
 
 @cache_page(30)
 def index(request):
@@ -143,6 +146,15 @@ def seen(request):
     # Record stats for items marked as seen on a mobile device
     # For workload purposes we ignore the posted data, and instead generate
     # some random data of our own, cached in memcached
+    global SAMPLE_COUNT
+    should_profile = False
+
+    if settings.PROFILING:
+        SAMPLE_COUNT += 1
+        if SAMPLE_COUNT >= settings.SAMPLE_RATE:
+            SAMPLE_COUNT = 0
+            should_profile = True
+
     bundleids = cache.get('bundleids')
     if bundleids is None:
         bundleids = [uuid.uuid4() for _ in range(1000)]
@@ -154,10 +166,10 @@ def seen(request):
 
     with statsd.pipeline() as pipe, BatchQuery() as b:
         for bundleid in random.sample(bundleids, random.randrange(3)):
-            if settings.PROFILING:
+            if should_profile:
                 pipe.incr('workloadoutput.bundle.{}.seen'.format(bundleid.hex))
             for entryid in random.sample(entryids, random.randrange(5)):
-                if settings.PROFILING:
+                if should_profile:
                     pipe.incr('workloadoutput.bundle.{}.{}.seen'.format(
                         bundleid.hex, entryid.hex))
                 BundleSeenModel(

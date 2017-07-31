@@ -15,6 +15,9 @@ from django.conf import settings
 
 _patches = []
 
+# Used for sample-based profiling
+CASSANDRA_COUNT = 0
+MEMCACHED_COUNT = 0
 
 def register_patch(f):
     _patches.append((f, (getdoc(f) or '').partition('\n')[0]))
@@ -54,9 +57,16 @@ if settings.PROFILING:
         def decorator(orig):
             @wraps(orig)
             def timed_execute(self, *args, **kwargs):
-                key = 'cassandra.{}.execute'.format(get_view_name())
-                statsd.incr(key)
-                with statsd.timer(key):
+                global CASSANDRA_COUNT
+
+                CASSANDRA_COUNT += 1
+                if CASSANDRA_COUNT >= settings.SAMPLE_RATE:
+                    CASSANDRA_COUNT = 0
+                    key = 'cassandra.{}.execute'.format(get_view_name())
+                    statsd.incr(key)
+                    with statsd.timer(key):
+                        return orig(self, *args, **kwargs)
+                else:
                     return orig(self, *args, **kwargs)
             return timed_execute
 
@@ -94,8 +104,17 @@ if settings.PROFILING:
         def decorator(orig):
             @wraps(orig)
             def timed(self, *args, **kwargs):
-                key = 'memcached.{}.{}'.format(get_view_name(), orig.__name__)
-                with statsd.timer(key):
+                global MEMCACHED_COUNT
+
+                MEMCACHED_COUNT += 1
+                with open("/tmp/sampling.out", "a") as f:
+                    f.write(str(MEMCACHED_COUNT) + " " + str(settings.SAMPLE_RATE) + "\n")
+                if MEMCACHED_COUNT >= settings.SAMPLE_RATE:
+                    MEMCACHED_COUNT = 0
+                    key = 'memcached.{}.{}'.format(get_view_name(), orig.__name__)
+                    with statsd.timer(key):
+                        return orig(self, *args, **kwargs)
+                else:
                     return orig(self, *args, **kwargs)
             return timed
 

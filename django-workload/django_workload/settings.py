@@ -21,6 +21,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# Sample rate for profiling
+SAMPLE_RATE = 1000
+
 # Enable/Disable profiling
 PROFILING = True
 

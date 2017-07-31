@@ -10,6 +10,9 @@ from django_statsd.middleware import (
     GraphiteRequestTimingMiddleware,
 )
 
+# Used for sample-based profiling
+SAMPLE_COUNT = 0
+
 
 # Update django_statsd middleware to newer Django requirements
 class GraphiteMiddleware(MiddlewareMixin, GraphiteMiddleware):
@@ -41,6 +44,7 @@ def memory_cpu_stats_middleware(get_response):
     from collections import Counter
     from django_statsd.clients import statsd
     from .global_request import get_view_name
+    from django.conf import settings
 
     mem_entries = (
         'rss',
@@ -56,20 +60,27 @@ def memory_cpu_stats_middleware(get_response):
         return res
 
     def middleware(request):
-        cpu_before = time.clock_gettime(time.CLOCK_PROCESS_CPUTIME_ID)
-        mem_before = summed(psutil.Process().memory_maps())
-        try:
+        global SAMPLE_COUNT
+
+        SAMPLE_COUNT += 1
+        if SAMPLE_COUNT >= settings.SAMPLE_RATE:
+            SAMPLE_COUNT = 0
+            cpu_before = time.clock_gettime(time.CLOCK_PROCESS_CPUTIME_ID)
+            mem_before = summed(psutil.Process().memory_maps())
+            try:
+                return get_response(request)
+            finally:
+                cpu_after = time.clock_gettime(time.CLOCK_PROCESS_CPUTIME_ID)
+                statsd.gauge(
+                    'cpu.{}'.format(get_view_name()),
+                    cpu_after - cpu_before)
+                mem_after = summed(psutil.Process().memory_maps())
+                mem_key_base = 'memory.{}.{{}}'.format(get_view_name())
+                for name, after in mem_after.items():
+                    diff = after - mem_before[name]
+                    statsd.gauge(mem_key_base.format(name) + '.total', after)
+                    statsd.gauge(mem_key_base.format(name) + '.change', diff)
+        else:
             return get_response(request)
-        finally:
-            cpu_after = time.clock_gettime(time.CLOCK_PROCESS_CPUTIME_ID)
-            statsd.gauge(
-                'cpu.{}'.format(get_view_name()),
-                cpu_after - cpu_before)
-            mem_after = summed(psutil.Process().memory_maps())
-            mem_key_base = 'memory.{}.{{}}'.format(get_view_name())
-            for name, after in mem_after.items():
-                diff = after - mem_before[name]
-                statsd.gauge(mem_key_base.format(name) + '.total', after)
-                statsd.gauge(mem_key_base.format(name) + '.change', diff)
 
     return middleware
