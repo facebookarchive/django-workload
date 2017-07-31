@@ -94,7 +94,7 @@ def validate_output(siege_file):
     has_warning = False
 
     for line in open(siege_file, 'r'):
-        if re.search("HTTP/1.1", line):
+        if re.search("HTTP/1.", line):
             values = line.strip().split()
 
             # Only expecting 200 codes
@@ -212,9 +212,9 @@ def parse_results(iterations, url_dict, url_target):
         total_200_hits = 0
 
         for line in open(out_file, 'r'):
-            if re.search("HTTP/1.1 200", line):
+            if re.search("HTTP/1.", line):
                 values = line.strip().split()
-                if len(values) >= 9:
+                if len(values) >= 9 and values[1] == "200":
                     latencies.append(float(values[2]))
                     total_200_hits += 1
                     curr_url = match(url_dict, values[8])
