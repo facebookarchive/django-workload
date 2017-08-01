@@ -24,6 +24,9 @@ STATSD_PORT = 8125
 # Memcached connection
 CACHES['default']['LOCATION'] = '127.0.0.1:11811'
 
+# Sample rate for profiling
+SAMPLE_RATE = 1000
+
 # Enable/disable profiling
 PROFILING = False
 
