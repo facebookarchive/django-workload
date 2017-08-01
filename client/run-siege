@@ -91,10 +91,11 @@ def validate_output(siege_file):
     http_error_codes = 0
     socket_timeouts = 0
     conn_refused = 0
+    http_1_0 = 0
     has_warning = False
 
     for line in open(siege_file, 'r'):
-        if re.search("HTTP/1.", line):
+        if re.search("HTTP/1.1", line):
             values = line.strip().split()
 
             # Only expecting 200 codes
@@ -104,6 +105,8 @@ def validate_output(siege_file):
             socket_timeouts += 1
         elif re.search("Connection refused", line):
             conn_refused += 1
+        elif re.search("HTTP/1.0", line):
+            http_1_0 += 1
 
     if http_error_codes > 0:
         print("WARNING: Got " + str(http_error_codes) + " HTTP "
@@ -116,6 +119,12 @@ def validate_output(siege_file):
     if conn_refused > 0:
         print("WARNING: Got " + str(conn_refused) + " connection refused "
               "errors")
+        has_warning = True
+    if http_1_0 > 0:
+        print("WARNING: Got " + str(http_1_0) + " HTTP/1.0 requests. This "
+              "workload is intended to use HTTP/1.1, therefore some metrics "
+              "will not not be computed. Please change the \"protocol\" "
+              "variable in siegerc to HTTP/1.1 or install a newer Siege")
         has_warning = True
     if has_warning:
         print("Please see full Siege log in " + siege_file + "\n")
@@ -212,9 +221,9 @@ def parse_results(iterations, url_dict, url_target):
         total_200_hits = 0
 
         for line in open(out_file, 'r'):
-            if re.search("HTTP/1.", line):
+            if re.search("HTTP/1.1 200", line):
                 values = line.strip().split()
-                if len(values) >= 9 and values[1] == "200":
+                if len(values) >= 9:
                     latencies.append(float(values[2]))
                     total_200_hits += 1
                     curr_url = match(url_dict, values[8])
