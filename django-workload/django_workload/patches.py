@@ -107,8 +107,6 @@ if settings.PROFILING:
                 global MEMCACHED_COUNT
 
                 MEMCACHED_COUNT += 1
-                with open("/tmp/sampling.out", "a") as f:
-                    f.write(str(MEMCACHED_COUNT) + " " + str(settings.SAMPLE_RATE) + "\n")
                 if MEMCACHED_COUNT >= settings.SAMPLE_RATE:
                     MEMCACHED_COUNT = 0
                     key = 'memcached.{}.{}'.format(get_view_name(), orig.__name__)
