@@ -114,6 +114,12 @@ When this error appears, you will not be able to open another terminal:
 
     -bash: fork: retry: Resource temporarily unavailable
 
-Solving this requires setting a large enough value for your user's pids.max variable:
+Solving this requires setting a large enough value for the systemd UserTasksMax
+variable:
 
-    echo 1000000 | sudo tee /sys/fs/cgroup/pids/user.slice/user-[your_UID].slice/pids.max
+    sudo vim /etc/systemd/logind.conf
+    [Login]
+    # insert the following line under the Login attribute
+    UserTasksMax=1000000
+
+Reboot for the changes to take effect.
