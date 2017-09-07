@@ -103,3 +103,17 @@ threshold. This threshold can be adjusted in the ~/.siegerc file (may need to
 be created) using the following attribute:
 
     failures = 1000000
+
+When running all the services on a single machine, it is also possible to hit
+the PID limit for the current user, resulting in Siege errors like:
+
+    [error] Inadequate resources to create pool crew.c:87: Resource temporarily unavailable
+    [fatal] unable to allocate memory for 185 simulated browser: Resource temporarily unavailable
+
+When this error appears, you will not be able to open another terminal:
+
+    -bash: fork: retry: Resource temporarily unavailable
+
+Solving this requires setting a large enough value for your user's pids.max variable:
+
+    echo 1000000 | sudo tee /sys/fs/cgroup/pids/user.slice/user-[your_UID].slice/pids.max
