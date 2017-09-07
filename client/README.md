@@ -103,3 +103,23 @@ threshold. This threshold can be adjusted in the ~/.siegerc file (may need to
 be created) using the following attribute:
 
     failures = 1000000
+
+When running all the services on a single machine, it is also possible to hit
+the PID limit for the current user, resulting in Siege errors like:
+
+    [error] Inadequate resources to create pool crew.c:87: Resource temporarily unavailable
+    [fatal] unable to allocate memory for 185 simulated browser: Resource temporarily unavailable
+
+When this error appears, you will not be able to open another terminal:
+
+    -bash: fork: retry: Resource temporarily unavailable
+
+Solving this requires setting a large enough value for the systemd UserTasksMax
+variable:
+
+    sudo vim /etc/systemd/logind.conf
+    [Login]
+    # insert the following line under the Login attribute
+    UserTasksMax=1000000
+
+Reboot for the changes to take effect.
