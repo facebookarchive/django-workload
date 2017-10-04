@@ -14,6 +14,8 @@ from .models import UserModel
 
 # global cache; normally fetching users is cached in memcached or similar
 user_ids = None
+
+
 def all_users():
     global user_ids
     if user_ids is None:
@@ -28,7 +30,12 @@ def all_users():
 def require_user(view):
     @wraps(view)
     def wrapper(request, *args, **kwargs):
-        user_id = random.choice(all_users())
+        users = all_users()
+        user_id = users[0]
+        user_idx = random.randint(0, len(users))
+        for i in range(len(users)):
+            if i == user_idx:
+                user_id = users[user_idx]
         request.user = UserModel.objects.get(id=user_id)
         return view(request, *args, **kwargs)
     return wrapper

@@ -20,12 +20,12 @@ from cassandra.cqlengine.query import BatchQuery
 from .users import require_user
 from .feed import Feed
 from .inbox import Inbox
+from .feed_timeline import FeedTimeline
 from .models import (
-    BundleEntryModel,
     BundleSeenModel,
-    FeedEntryModel,
-    UserModel,
 )
+from .bundle_tray import BundleTray
+
 
 # Used for sample-based profiling
 SAMPLE_COUNT = 0
@@ -64,20 +64,10 @@ def index(request):
 @require_user
 def feed_timeline(request):
     # Produce a JSON response containing the 'timeline' for a given user
-    user = request.user
-    feed = user.feed_entries().limit(20)
-    user_info = user.json_data
-    result = {
-        'num_results': len(feed),
-        'items': [
-            {
-                'pk': str(e.id),
-                'comment_count': e.comment_count,
-                'published': e.published.timestamp(),
-                'user': user_info
-            }
-            for e in feed]
-    }
+    feed_timeline = FeedTimeline(request)
+    result = feed_timeline.get_timeline()
+    # sort by timestamp and do some more "meaningful" work
+    result = feed_timeline.post_process(result)
     return HttpResponse(json.dumps(result), content_type='text/json')
 
 
@@ -92,43 +82,9 @@ def timeline(request):
 @require_user
 def bundle_tray(request):
     # Fetch bundles of content from followers to show
-    bundles = list(
-        BundleEntryModel.objects.filter(userid__in=request.user.following)
-        .limit(10))
-    # only one bundle per user
-    userids = {}
-    feedentryids = []
-    for bundle in bundles:
-        if bundle.userid in userids:
-            continue
-        userids[bundle.userid] = bundle.id
-        feedentryids += bundle.entry_ids
-    first_bundleids = set(userids.values())
-    # Fetch user information
-    userinfo = {}
-    for user in UserModel.objects.filter(id__in=list(userids)):
-        userinfo[user.id] = user.json_data
-    # fetch entry information
-    feedentryinfo = {}
-    for feedentry in FeedEntryModel.objects.filter(id__in=list(feedentryids)):
-        feedentryinfo[feedentry.id] = {
-            'pk': str(feedentry.id),
-            'comment_count': feedentry.comment_count,
-            'published': feedentry.published.timestamp(),
-        }
-
-    result = {'bundle': [
-        {
-            'pk': str(b.id),
-            'comment_count': b.comment_count,
-            'published': b.published.timestamp(),
-            'user': userinfo[b.userid],
-            'items': [
-                feedentryinfo[f]
-                for f in bundle.entry_ids if f in feedentryinfo]
-        }
-        for b in bundles if b.id in first_bundleids
-    ]}
+    bundle = BundleTray(request)
+    result = bundle.get_bundle()
+    result = bundle.post_process(result)
     return HttpResponse(json.dumps(result), content_type='text/json')
 
 
@@ -137,6 +93,7 @@ def inbox(request):
     # produce an inbox from different sources of information
     inbox = Inbox(request)
     result = inbox.results()
+    result = inbox.post_process(result)
     return HttpResponse(json.dumps(result), content_type='text/json')
 
 

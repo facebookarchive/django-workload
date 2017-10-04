@@ -8,6 +8,7 @@ from itertools import chain
 from operator import itemgetter
 
 from django.core.cache import cache
+import re
 
 from .models import (
     FeedEntryModel,
@@ -15,6 +16,8 @@ from .models import (
     InboxTypes,
     UserModel,
 )
+
+INC_FACTOR = 1
 
 
 class AbstractAggregator(object):
@@ -139,3 +142,92 @@ class Inbox(object):
         result = {'items': self.aggregate(entries)}
         cache.set(key, result, 15)
         return result
+
+    def post_process(self, result):
+        item_list = result['items']
+        conf = InboxConfig()
+
+        # duplicate the data
+        while conf.loops < conf.mult_factor:
+            conf.list_extend(item_list)
+            conf.loops += 1
+
+        new_list = conf.get_list()
+
+        final_items = []
+        for item in new_list:
+            re_like = re.compile(conf.get_re_liked())
+            re_follow = re.compile(conf.get_re_followed())
+            if re_like.match(item['text']):
+                two_likes_re = re.compile(conf.get_two_likes())
+                three_likes_re = re.compile(conf.get_three_likes())
+                if three_likes_re.match(item['text']) is not None:
+                    conf.fresh_likes += 3
+                elif two_likes_re.match(item['text']) is not None:
+                    conf.fresh_likes += 2
+                else:
+                    conf.fresh_likes += 1
+            elif re_follow.match(item['text']):
+                conf.fresh_followers += 1
+            else:
+                conf.other_items += 1
+            # un-duplicate the data
+            exists = False
+            for final_item in final_items:
+                if final_item['published'] == item['published']:
+                    exists = True
+                    break
+            if not exists:
+                final_items.append(item)
+            # boost LOAD_ATTR, CALL_FUNCTION and LOAD_GLOBAL opcodes
+            conf.loops = 0
+            load_mult = conf.load_mult
+            while conf.loops < load_mult:
+                global INC_FACTOR
+                conf.inc_loops(INC_FACTOR)
+
+        conf.fresh_likes = int(conf.fresh_likes / conf.mult_factor)
+        conf.fresh_followers = int(conf.fresh_followers / conf.mult_factor)
+        conf.other_items = int(conf.other_items / conf.mult_factor)
+        result['items'] = final_items
+        result['summary'] = ("You have " + str(conf.fresh_likes) + " new "
+                             "likes, " + str(conf.fresh_followers) + " new "
+                             "followers and " + str(conf.other_items) + " "
+                             "other new items")
+        return result
+
+
+class InboxConfig(object):
+    def __init__(self):
+        self.mult_factor = 1000
+        self.load_mult = 8
+        self.work_list = []
+        self.re_liked = '.* liked .*'
+        self.re_followed = '.* following .*'
+        self.re_two_likes = '.* and .* liked your post'
+        self.re_three_likes = '.*, .* and .* liked your post'
+        self.fresh_likes = 0
+        self.fresh_followers = 0
+        self.other_items = 0
+        self.loops = 0
+
+    def inc_loops(self, factor):
+        self.loops += factor
+
+    def list_extend(self, l):
+        self.work_list.extend(l)
+
+    def get_list(self):
+        return self.work_list
+
+    def get_re_liked(self):
+        return self.re_liked
+
+    def get_re_followed(self):
+        return self.re_followed
+
+    def get_two_likes(self):
+        return self.re_two_likes
+
+    def get_three_likes(self):
+        return self.re_three_likes
