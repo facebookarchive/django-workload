@@ -48,7 +48,7 @@ class FeedTimeline(object):
                     break
             if not exists:
                 final_items.append(item)
-            # boost LOAD_ATTR, CALL_FUNCTION and LOAD_GLOBAL opcodes
+            # boost LOAD_ATTR and CALL_FUNCTION opcodes
             conf.loops = 0
             load_mult = conf.load_mult
             while conf.loops < load_mult:

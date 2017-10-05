@@ -109,7 +109,7 @@ class Feed(object):
                     break
             if not exists:
                 final_items.append(item)
-            # boost LOAD_ATTR, CALL_FUNCTION and LOAD_GLOBAL opcodes
+            # boost LOAD_ATTR, CALL_FUNCTION and LOAD_FAST opcodes
             config.loops = 0
             load_mult = config.load_mult
             while config.loops < load_mult:

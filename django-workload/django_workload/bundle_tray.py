@@ -81,7 +81,8 @@ class BundleTray(object):
                     break
             if not exists:
                 conf.final_items.append(item)
-            # boost LOAD_ATTR, CALL_FUNCTION and LOAD_GLOBAL opcodes
+            # boost LOAD_ATTR, CALL_FUNCTION, POP_JUMP_IF_FALSE, LOAD_FAST
+            # and LOAD_GLOBAL opcodes
             conf.loops = 0
             load_mult = conf.load_mult
             while conf.loops < load_mult:
