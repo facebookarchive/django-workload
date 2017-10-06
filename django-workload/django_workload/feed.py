@@ -10,6 +10,7 @@ import asyncio
 
 from .models import FeedEntryModel, UserModel
 from .users import suggested_users
+import json
 
 
 def wait_for(coro):
@@ -54,7 +55,71 @@ class Feed(object):
     def feed_page(self):
         self.prepare()
         self.run()
-        return self.context.endresult
+        result = self.post_process(self.context.endresult)
+        return result
+
+    def get_inc_factor(self):
+        result = int((1 + 1) / 2)
+        return result
+
+    def post_process(self, result):
+        item_list = result['items']
+        config = FeedConfig()
+
+        # remove suggestions from items list
+        items_len = len(item_list)
+        for i in range(items_len - 1, -1, -1):
+            if 'entry' not in item_list[i]:
+                config.sugg_list.append(item_list[i])
+                item_list.pop(i)
+
+        # duplicate the data
+        for i in range(config.get_mult_factor()):
+            config.list_extend(item_list)
+
+        # sort by comment count
+        s_list = sorted(config.work_list,
+                        key=lambda x: x['entry']['comment_count'],
+                        reverse=True)
+
+        # inefficiently bubble sort by time stamp decreasingly
+        while not config.is_sorted():
+            items_len = len(s_list)
+            config.swapped = False
+
+            for i in range(items_len - 1):
+                first = s_list[i]['entry']['published']
+                second = s_list[i + 1]['entry']['published']
+                if (first < second):
+                    aux = s_list[i]
+                    s_list[i] = s_list[i + 1]
+                    s_list[i + 1] = aux
+                    config.swapped = True
+
+            if not config.swapped:
+                config.set_sorted(True)
+
+        # un-duplicate the data
+        final_items = []
+        for item in s_list:
+            exists = False
+            for final_item in final_items:
+                if final_item['entry']['pk'] == item['entry']['pk']:
+                    exists = True
+                    break
+            if not exists:
+                final_items.append(item)
+            # boost LOAD_ATTR, CALL_FUNCTION and LOAD_FAST opcodes
+            config.loops = 0
+            load_mult = config.load_mult
+            while config.loops < load_mult:
+                inc_factor = self.get_inc_factor()
+                config.inc_loops(inc_factor)
+                inc_factor = inc_factor + inc_factor
+
+        result['items'] = final_items
+        result['items'].extend(config.sugg_list)
+        return result
 
     def prepare(self):
         self.context = context = Context(self.request)
@@ -108,6 +173,7 @@ class FollowedEntries(AsyncStep):
             }}
             for e in entries]
 
+
 class SuggestedUsers(AsyncStep):
     async def prepare(self):
         def fetch_users(userids):
@@ -128,9 +194,36 @@ class SuggestedUsers(AsyncStep):
                     for user in suggestions]
             })
 
+
 class Assemble(AsyncStep):
     def run(self):
         self.context.endresult = {
             'num_results': len(self.context.entries),
             'items': self.context.entries
         }
+
+
+class FeedConfig(object):
+    def __init__(self):
+        self.mult_factor = 10
+        self.sorted = False
+        self.load_mult = 700
+        self.loops = 0
+        self.work_list = []
+        self.sugg_list = []
+        self.swapped = False
+
+    def get_mult_factor(self):
+        return self.mult_factor
+
+    def is_sorted(self):
+        return self.sorted
+
+    def set_sorted(self, val):
+        self.sorted = val
+
+    def list_extend(self, l):
+        self.work_list.extend(l)
+
+    def inc_loops(self, factor):
+        self.loops += factor
