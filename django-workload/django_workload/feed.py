@@ -10,7 +10,6 @@ import asyncio
 
 from .models import FeedEntryModel, UserModel
 from .users import suggested_users
-import json
 
 
 def wait_for(coro):
@@ -62,31 +61,26 @@ class Feed(object):
         result = int((1 + 1) / 2)
         return result
 
-    def post_process(self, result):
-        item_list = result['items']
-        config = FeedConfig()
-
+    def dup_data(self, item_list, config):
         # remove suggestions from items list
         items_len = len(item_list)
         for i in range(items_len - 1, -1, -1):
             if 'entry' not in item_list[i]:
                 config.sugg_list.append(item_list[i])
                 item_list.pop(i)
-
         # duplicate the data
         for i in range(config.get_mult_factor()):
             config.list_extend(item_list)
 
+    def sort_data(self, config):
         # sort by comment count
         s_list = sorted(config.work_list,
                         key=lambda x: x['entry']['comment_count'],
                         reverse=True)
-
         # inefficiently bubble sort by time stamp decreasingly
         while not config.is_sorted():
             items_len = len(s_list)
             config.swapped = False
-
             for i in range(items_len - 1):
                 first = s_list[i]['entry']['published']
                 second = s_list[i + 1]['entry']['published']
@@ -95,10 +89,16 @@ class Feed(object):
                     s_list[i] = s_list[i + 1]
                     s_list[i + 1] = aux
                     config.swapped = True
-
             if not config.swapped:
                 config.set_sorted(True)
+        return s_list
 
+    def post_process(self, result):
+        item_list = result['items']
+        config = FeedConfig()
+
+        self.dup_data(item_list, config)
+        s_list = self.sort_data(config)
         # un-duplicate the data
         final_items = []
         for item in s_list:
