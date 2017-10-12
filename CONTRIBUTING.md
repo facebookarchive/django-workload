@@ -36,7 +36,7 @@ use of the [flake8-bugbear plugin][2].
 
 ## License
 By contributing to Django Workload, you agree that your contributions will be
-licensed under the LICENSE file in the root directory of this source tree.
+licensed under the [LICENSE](/LICENSE) file in the root directory of this source tree.
 
 [1]: https://github.com/Instagram/django-workload
 [2]: https://github.com/PyCQA/flake8-bugbear
