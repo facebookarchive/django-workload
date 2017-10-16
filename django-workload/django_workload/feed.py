@@ -205,8 +205,12 @@ class Assemble(AsyncStep):
 
 class FeedConfig(object):
     def __init__(self):
+        # Number of times the original items list is duplicated in order
+        # to make the view more Python intensive
         self.mult_factor = 10
         self.sorted = False
+        # Number of times the while loop in post_process is executed, in order
+        # to obtain a representative opcode usage for real-life scenarios
         self.load_mult = 700
         self.loops = 0
         self.work_list = []

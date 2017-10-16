@@ -205,7 +205,11 @@ class Inbox(object):
 
 class InboxConfig(object):
     def __init__(self):
+        # Number of times the original inbox items list is duplicated in order
+        # to make the view more Python intensive
         self.mult_factor = 700
+        # Number of times the while loop in post_process is executed, in order
+        # to obtain a representative opcode usage for real-life scenarios
         self.load_mult = 8
         self.work_list = []
         self.re_liked = '.* liked .*'

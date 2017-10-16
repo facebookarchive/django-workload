@@ -102,10 +102,14 @@ class BundleTray(object):
 
 class BundleConfig(object):
     def __init__(self):
+        # Number of times the original bundle list is duplicated in order
+        # to make the view more Python intensive
         self.mult_factor = 20
         self.comm_total = 0
         self.work_list = []
         self.loops = 0
+        # Number of times the while loop in post_process is executed, in order
+        # to obtain a representative opcode usage for real-life scenarios
         self.load_mult = 600
         self.inc_factor = 1
         self.final_items = []
