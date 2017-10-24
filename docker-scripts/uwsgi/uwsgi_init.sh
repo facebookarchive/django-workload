@@ -18,7 +18,8 @@ else
         -e "s/STATSD_HOST = 'localhost'/STATSD_HOST = '$GRAPHITE_ENDPOINT'/g"                                                                             \
         -i cluster_settings.py
 
-    sed -i "s/processes = 88/processes = 100/g" uwsgi.ini # $(grep -c processor /proc/cpuinfo)/g" \
+    PROC_NO=$(grep -c processor /proc/cpuinfo)
+    sed -i "s/processes = 88/processes = $PROC_NO/g" uwsgi.ini
 
     cp cluster_settings.py cluster_settings.py.bak
 fi
