@@ -6,8 +6,20 @@ Workload. Each entity (Cassandra, uWSGI, Memcached, Siege, Graphite) is set up
 in a separate container.
 
 For instructions on how to install docker, please refer to:
+<https://docs.docker.com/engine/installation/linux/ubuntu/>
 
-    https://docs.docker.com/engine/installation/linux/ubuntu/
+## Warning
+
+The Cassandra heap size is set to 64GB in
+[docker-scripts/cassandra/jvm.options.128_GB](/docker-scripts/cassandra/jvm.options.128_GB).
+If your machine does not have that much RAM, starting the Cassandra container
+will cause swapping, therefore your machine will become unresponsive.
+
+Please change the value of the heap size in the file mentioned above to a more
+suitable value (change Xms and Xmx to half the system memory or less). Also
+change Xmn proportionally to the previous heap size (if changing heap size to
+1/4 its original value, also reduce Xmn to 1/4 its original value).
+
 
 ## Build the docker images
 
@@ -21,16 +33,32 @@ provide the script above with the absolute path to the install folder of your
 build
 
     # CPython tree
-    ./configure --prefix=/some/folder
+    ./configure --prefix=/python/install/folder
     make
     make install
     # Docker scripts
-    ./build_containers.sh /some/folder
+    ./build_containers.sh /python/install/folder
 
-If the UWSGI_ONLY environment variable is not set to 1, the above script will
-build all the containers. Since all other containers except uWSGI do not change
-between runs, UWSGI_ONLY=1 can be specified before the build_containers.sh
-script to only rebuild the Docker image for uWSGI:
+Please note that the latest Python version that was used to test the
+installation scripts was 3.6.3. Subsequent versions have not been tested. All
+the packages installed for Docker are the same as what would be installed on
+bare-metal if using Ubuntu 16.04. All Python dependencies installed via pip
+that do not have a specific version requirement are subject to change. At the
+time this documentation was written, the following package versions were used:
+* Cassandra 3.0.14
+* Memcached 1.4.25-2ubuntu1.2
+* Java 8u151
+* Siege 3.0.8
+* gcc 5.4.0-6ubuntu1
+* uWSGI 2.0.15
+
+The first time the workload is deployed, all images need to be built. After
+this, in order to measure the performance of a different Python build, only
+the uWSGI image needs to be re-built. This is the only image that changes, as
+the Python used for the workload changes.
+
+In order to build only the uWSGI image, UWSGI_ONLY=1 must be specified before
+the build_containers.sh script:
 
     # remember to remove the old container & image
     ./cleanup_containers.sh
@@ -42,8 +70,7 @@ to specify the "UWSGI_ONLY=1" variable __after__ the "sudo" word, otherwise it
 will not be taken into consideration.
 
 To run docker without "sudo", please follow the instructions here:
-
-    https://docs.docker.com/engine/installation/linux/linux-postinstall/
+<https://docs.docker.com/engine/installation/linux/linux-postinstall/>
 
 # Run the workload
 
