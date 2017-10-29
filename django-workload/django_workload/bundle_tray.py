@@ -53,34 +53,38 @@ class BundleTray(object):
         return result
 
     def get_inc_factor(self):
-        global INC_FACTOR
-        return int((INC_FACTOR + 1) / 2)
+        return int((INC_FACTOR + 1 + 1) / 3)
+
+    def dup_sort_data(self, bundle_list, conf):
+        # duplicate the data
+        for i in range(conf.get_mult_factor()):
+            conf.list_extend(bundle_list)
+        sorted_list = sorted(conf.get_list(),
+                             key=lambda x: x['published'],
+                             reverse=True)
+        conf.final_items = []
+        return sorted_list
+
+    def undup_data(self, item, conf):
+        exists = False
+        for final_item in conf.final_items:
+            if final_item['published'] == item['published']:
+                exists = True
+                break
+        if not exists:
+            conf.final_items.append(item)
 
     def post_process(self, res):
         bundle_list = res['bundle']
         conf = BundleConfig()
 
-        # duplicate the data
-        for i in range(conf.get_mult_factor()):
-            conf.list_extend(bundle_list)
-
-        sorted_list = sorted(conf.get_list(),
-                             key=lambda x: x['published'],
-                             reverse=True)
-        conf.final_items = []
-
+        sorted_list = self.dup_sort_data(bundle_list, conf)
         for item in sorted_list:
             conf.comm_total = conf.comm_total + item['comment_count']
             for sub in item['items']:
                 conf.comm_total = conf.comm_total + sub['comment_count']
             # un-duplicate the data
-            exists = False
-            for final_item in conf.final_items:
-                if final_item['published'] == item['published']:
-                    exists = True
-                    break
-            if not exists:
-                conf.final_items.append(item)
+            self.undup_data(item, conf)
             # boost LOAD_ATTR, CALL_FUNCTION, POP_JUMP_IF_FALSE, LOAD_FAST
             # and LOAD_GLOBAL opcodes
             conf.loops = 0
@@ -98,10 +102,14 @@ class BundleTray(object):
 
 class BundleConfig(object):
     def __init__(self):
+        # Number of times the original bundle list is duplicated in order
+        # to make the view more Python intensive
         self.mult_factor = 20
         self.comm_total = 0
         self.work_list = []
         self.loops = 0
+        # Number of times the while loop in post_process is executed, in order
+        # to obtain a representative opcode usage for real-life scenarios
         self.load_mult = 600
         self.inc_factor = 1
         self.final_items = []

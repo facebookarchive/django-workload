@@ -143,34 +143,34 @@ class Inbox(object):
         cache.set(key, result, 15)
         return result
 
-    def post_process(self, result):
-        item_list = result['items']
-        conf = InboxConfig()
-
+    def dup_data(self, item_list, conf):
         # duplicate the data
         while conf.loops < conf.mult_factor:
             conf.list_extend(item_list)
             conf.loops += 1
+        return conf.get_list()
 
-        new_list = conf.get_list()
-
-        final_items = []
-        for item in new_list:
-            re_like = re.compile(conf.get_re_liked())
-            re_follow = re.compile(conf.get_re_followed())
-            if re_like.match(item['text']):
-                two_likes_re = re.compile(conf.get_two_likes())
-                three_likes_re = re.compile(conf.get_three_likes())
-                if three_likes_re.match(item['text']) is not None:
-                    conf.fresh_likes += 3
-                elif two_likes_re.match(item['text']) is not None:
-                    conf.fresh_likes += 2
-                else:
-                    conf.fresh_likes += 1
-            elif re_follow.match(item['text']):
-                conf.fresh_followers += 1
+    def count_likes(self, item, conf):
+        re_like = re.compile(conf.get_re_liked())
+        re_follow = re.compile(conf.get_re_followed())
+        if re_like.match(item['text']):
+            two_likes_re = re.compile(conf.get_two_likes())
+            three_likes_re = re.compile(conf.get_three_likes())
+            if three_likes_re.match(item['text']) is not None:
+                conf.fresh_likes += 3
+            elif two_likes_re.match(item['text']) is not None:
+                conf.fresh_likes += 2
             else:
-                conf.other_items += 1
+                conf.fresh_likes += 1
+        elif re_follow.match(item['text']):
+            conf.fresh_followers += 1
+        else:
+            conf.other_items += 1
+
+    def compute_stats_undup(self, item_list, conf):
+        final_items = []
+        for item in item_list:
+            self.count_likes(item, conf)
             # un-duplicate the data
             exists = False
             for final_item in final_items:
@@ -183,9 +183,15 @@ class Inbox(object):
             conf.loops = 0
             load_mult = conf.load_mult
             while conf.loops < load_mult:
-                global INC_FACTOR
                 conf.inc_loops(INC_FACTOR)
+        return final_items
 
+    def post_process(self, result):
+        item_list = result['items']
+        conf = InboxConfig()
+
+        new_list = self.dup_data(item_list, conf)
+        final_items = self.compute_stats_undup(new_list, conf)
         conf.fresh_likes = int(conf.fresh_likes / conf.mult_factor)
         conf.fresh_followers = int(conf.fresh_followers / conf.mult_factor)
         conf.other_items = int(conf.other_items / conf.mult_factor)
@@ -199,7 +205,11 @@ class Inbox(object):
 
 class InboxConfig(object):
     def __init__(self):
-        self.mult_factor = 1000
+        # Number of times the original inbox items list is duplicated in order
+        # to make the view more Python intensive
+        self.mult_factor = 700
+        # Number of times the while loop in post_process is executed, in order
+        # to obtain a representative opcode usage for real-life scenarios
         self.load_mult = 8
         self.work_list = []
         self.re_liked = '.* liked .*'
