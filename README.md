@@ -1,4 +1,4 @@
-# Django workload by Instagram and Intel
+# Django workload by Instagram and Intel, v1.0 RC
 
 This project aims to provide a Django workload based on a real-world
 large-scale production workload that serves mobile clients.
