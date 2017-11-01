@@ -1,5 +1,7 @@
 # Django workload by Instagram and Intel
 
+This is Django Workload release candidate (RC).
+
 This project aims to provide a Django workload based on a real-world
 large-scale production workload that serves mobile clients.
 
