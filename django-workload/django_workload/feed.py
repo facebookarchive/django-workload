@@ -57,10 +57,6 @@ class Feed(object):
         result = self.post_process(self.context.endresult)
         return result
 
-    def get_inc_factor(self):
-        result = int((1 + 1) / 2)
-        return result
-
     def dup_data(self, item_list, config):
         # remove suggestions from items list
         items_len = len(item_list)
@@ -109,13 +105,6 @@ class Feed(object):
                     break
             if not exists:
                 final_items.append(item)
-            # boost LOAD_ATTR, CALL_FUNCTION and LOAD_FAST opcodes
-            config.loops = 0
-            load_mult = config.load_mult
-            while config.loops < load_mult:
-                inc_factor = self.get_inc_factor()
-                config.inc_loops(inc_factor)
-                inc_factor = inc_factor + inc_factor
 
         result['items'] = final_items
         result['items'].extend(config.sugg_list)
@@ -209,10 +198,6 @@ class FeedConfig(object):
         # to make the view more Python intensive
         self.mult_factor = 10
         self.sorted = False
-        # Number of times the while loop in post_process is executed, in order
-        # to obtain a representative opcode usage for real-life scenarios
-        self.load_mult = 700
-        self.loops = 0
         self.work_list = []
         self.sugg_list = []
         self.swapped = False
@@ -228,6 +213,3 @@ class FeedConfig(object):
 
     def list_extend(self, l):
         self.work_list.extend(l)
-
-    def inc_loops(self, factor):
-        self.loops += factor

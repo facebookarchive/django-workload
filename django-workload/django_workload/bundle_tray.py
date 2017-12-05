@@ -5,9 +5,6 @@ from .models import (
 )
 
 
-INC_FACTOR = 1
-
-
 class BundleTray(object):
     def __init__(self, request):
         self.request = request
@@ -52,9 +49,6 @@ class BundleTray(object):
         ]}
         return result
 
-    def get_inc_factor(self):
-        return int((INC_FACTOR + 1 + 1) / 3)
-
     def dup_sort_data(self, bundle_list, conf):
         # duplicate the data
         for i in range(conf.get_mult_factor()):
@@ -85,15 +79,6 @@ class BundleTray(object):
                 conf.comm_total = conf.comm_total + sub['comment_count']
             # un-duplicate the data
             self.undup_data(item, conf)
-            # boost LOAD_ATTR, CALL_FUNCTION, POP_JUMP_IF_FALSE, LOAD_FAST
-            # and LOAD_GLOBAL opcodes
-            conf.loops = 0
-            load_mult = conf.load_mult
-            while conf.loops < load_mult:
-                inc_factor = self.get_inc_factor()
-                if inc_factor == conf.inc_factor:
-                    conf.inc_factor = int((conf.inc_factor + inc_factor) / 2)
-                    conf.inc_loops(conf.inc_factor)
 
         res['comments_total'] = int(conf.comm_total / conf.get_mult_factor())
         res['bundle'] = conf.final_items
@@ -107,18 +92,10 @@ class BundleConfig(object):
         self.mult_factor = 20
         self.comm_total = 0
         self.work_list = []
-        self.loops = 0
-        # Number of times the while loop in post_process is executed, in order
-        # to obtain a representative opcode usage for real-life scenarios
-        self.load_mult = 600
-        self.inc_factor = 1
         self.final_items = []
 
     def get_mult_factor(self):
         return self.mult_factor
-
-    def inc_loops(self, factor):
-        self.loops += factor
 
     def list_extend(self, l):
         self.work_list.extend(l)
