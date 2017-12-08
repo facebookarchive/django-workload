@@ -17,8 +17,6 @@ from .models import (
     UserModel,
 )
 
-INC_FACTOR = 1
-
 
 class AbstractAggregator(object):
     def add(self, entry):
@@ -179,11 +177,6 @@ class Inbox(object):
                     break
             if not exists:
                 final_items.append(item)
-            # boost LOAD_ATTR, CALL_FUNCTION and LOAD_GLOBAL opcodes
-            conf.loops = 0
-            load_mult = conf.load_mult
-            while conf.loops < load_mult:
-                conf.inc_loops(INC_FACTOR)
         return final_items
 
     def post_process(self, result):
@@ -208,9 +201,6 @@ class InboxConfig(object):
         # Number of times the original inbox items list is duplicated in order
         # to make the view more Python intensive
         self.mult_factor = 700
-        # Number of times the while loop in post_process is executed, in order
-        # to obtain a representative opcode usage for real-life scenarios
-        self.load_mult = 8
         self.work_list = []
         self.re_liked = '.* liked .*'
         self.re_followed = '.* following .*'
@@ -220,9 +210,6 @@ class InboxConfig(object):
         self.fresh_followers = 0
         self.other_items = 0
         self.loops = 0
-
-    def inc_loops(self, factor):
-        self.loops += factor
 
     def list_extend(self, l):
         self.work_list.extend(l)

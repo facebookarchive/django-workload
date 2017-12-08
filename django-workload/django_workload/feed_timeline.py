@@ -19,10 +19,6 @@ class FeedTimeline(object):
             }
             return result
 
-    def get_inc_factor(self):
-        result = int((1 + 1) / 2)
-        return result
-
     def post_process(self, result):
         item_list = result['items']
         conf = FeedTimelineConfig()
@@ -48,11 +44,6 @@ class FeedTimeline(object):
                     break
             if not exists:
                 final_items.append(item)
-            # boost LOAD_ATTR and CALL_FUNCTION opcodes
-            conf.loops = 0
-            load_mult = conf.load_mult
-            while conf.loops < load_mult:
-                conf.inc_loops(self.get_inc_factor())
 
         result['comments_total'] = int(conf.comments_total / conf.mult_factor)
         result['items'] = final_items
@@ -68,13 +59,6 @@ class FeedTimelineConfig(object):
         self.user = ""
         self.comments_total = 0
         self.comments_per_user = {}
-        self.loops = 0
-        # Number of times the while loop in post_process is executed, in order
-        # to obtain a representative opcode usage for real-life scenarios
-        self.load_mult = 1000
-
-    def inc_loops(self, factor):
-        self.loops += factor
 
     def list_extend(self, l):
         self.work_list.extend(l)
